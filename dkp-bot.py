@@ -1,108 +1,35 @@
-# import discord
-# from discord.ext import commands
-
-# intents = discord.Intents.default()
-# intents.members = True  # Enable the 'members' intent to access member-related events
-
-# bot = commands.Bot(command_prefix='!', intents=intents)
-
-# dkp_data = {}  # A dictionary to store DKP data
-
-# @bot.event
-# async def on_ready():
-#     print(f'Logged in as {bot.user.name}')
-
-# @bot.command()
-# async def add_dkp(ctx, player: discord.Member, points: int):
-#     """Add DKP points to a player."""
-#     if player.id not in dkp_data:
-#         dkp_data[player.id] = 0
-
-#     dkp_data[player.id] += points
-#     await ctx.send(f'{player.display_name} has been awarded {points} DKP.')
-
-# @bot.command()
-# async def check_dkp(ctx, player: discord.Member = None):
-#     """Check DKP points for a player or all players if none is specified."""
-#     if player is None:
-#         message = "DKP standings:\n"
-#         for member_id, points in dkp_data.items():
-#             member = ctx.guild.get_member(member_id)
-#             if member is not None:
-#                 message += f'{member.display_name}: {points} DKP\n'
-#     else:
-#         if player.id in dkp_data:
-#             message = f'{player.display_name} has {dkp_data[player.id]} DKP.'
-#         else:
-#             message = f'{player.display_name} has no DKP data.'
-
-#     await ctx.send(message)
-
-# bot.run('MTEwODY1MTQxMDI4NDg4ODA2NA.GfstjG.Kdu97sk1ktv43ukZ82NmnrCsnrI0nL46HqQNos')
-
-# import discord
-# from discord.ext import commands
-
-# intents = discord.Intents.default()
-# intents.members = True  # Enable the 'members' intent to access member-related events
-
-# bot = commands.Bot(command_prefix='!', intents=None)
-
-# @bot.event
-# async def on_ready():
-#     print(f'Logged in as {bot.user.name}')
-
-# @bot.command()
-# async def hello(ctx):
-#     await ctx.send('Hello, I am your Discord bot!')
-
-# bot.run('MTEwODY1MTQxMDI4NDg4ODA2NA.GfstjG.Kdu97sk1ktv43ukZ82NmnrCsnrI0nL46HqQNos')
-
 import discord
 from discord.ext import commands
+from datetime import datetime, timedelta
 
-intents = discord.Intents.default()
-intents.members = True  # Enable the 'members' intent to access member-related events
+intents = discord.Intents.all()
+intents.messages = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
-
-allowed_channel_id = 1108667680774422579  # Replace with the ID of the desired channel
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
 
 @bot.command()
-async def add_dkp(ctx, player: discord.Member, points: int):
-    """Add DKP points to a player."""
-    if ctx.channel.id == allowed_channel_id:
-        if player.id not in dkp_data:
-            dkp_data[player.id] = 0
+async def hnm(ctx, hnm_name, day, time):
+    # Convert day and time to UTC
+    utc_time = convert_to_utc(day, time)
 
-        dkp_data[player.id] += points
-        await ctx.send(f'{player.display_name} has been awarded {points} DKP.')
-    else:
-        await ctx.send("This command can only be used in the designated channel.")
+    # Send DM to the user
+    await ctx.author.send(f'UTC time for {hnm_name}: {utc_time}')
 
-@bot.command()
-async def check_dkp(ctx, player: discord.Member = None):
-    """Check DKP points for a player or all players if none is specified."""
-    if ctx.channel.id == allowed_channel_id:
-        if player is None:
-            message = "DKP standings:\n"
-            for member_id, points in dkp_data.items():
-                member = ctx.guild.get_member(member_id)
-                if member is not None:
-                    message += f'{member.display_name}: {points} DKP\n'
-        else:
-            if player.id in dkp_data:
-                message = f'{player.display_name} has {dkp_data[player.id]} DKP.'
-            else:
-                message = f'{player.display_name} has no DKP data.'
+    # Post the result in a channel
+    channel = bot.get_channel(1110052586561744896)  # Replace `channel_id` with your desired channel ID
+    await channel.send(f'{hnm_name}: {utc_time}')
 
-        await ctx.send(message)
-    else:
-        await ctx.send("This command can only be used in the designated channel.")
+def convert_to_utc(day, time):
+    # Assuming day is in the format "YYYY-MM-DD" and time is in the format "HH:MM"
+    dt = datetime.strptime(f'{day} {time}', '%Y-%m-%d %H:%M:%S')
 
+    # Convert to UTC
+    utc_dt = dt - timedelta(hours=dt.hour)
+
+    return utc_dt.strftime('%Y-%m-%d %H:%M')
 
 bot.run('MTEwODY1MTQxMDI4NDg4ODA2NA.GfstjG.Kdu97sk1ktv43ukZ82NmnrCsnrI0nL46HqQNos')
