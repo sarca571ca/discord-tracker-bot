@@ -50,15 +50,23 @@ async def Simurgh(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
 async def ShikigamiWeapon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
     await handle_hnm_command(ctx, "Shikigami Weapon", day, timestamp)
 
+@bot.command(aliases=["kv", "kingv", "kingvine"])
+async def ShikigamiWeapon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+    await handle_hnm_command(ctx, "King Vinegarroon", day, timestamp)
+
 
 @bot.command(aliases=["vrt", "vrtr", "vrtra"])
 async def Vrtra(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
     await handle_hnm_command(ctx, "Vrtra", day, timestamp)
 
-
 async def handle_hnm_command(ctx, hnm: str, day: str, timestamp: str):
+    original_hnm = hnm  # Store the original HNM name
+
+    if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
+        hnm = "GroundKings"
+
     if day is None:
-        await ctx.author.send(f"Please provide the day and timestamp for {hnm}:")
+        await ctx.author.send(f"Please provide the day and timestamp for {original_hnm}:")
         response = await bot.wait_for("message", check=lambda message: message.author == ctx.author)
         input_parts = response.content.split(maxsplit=1)
         day = input_parts[0]
@@ -70,21 +78,26 @@ async def handle_hnm_command(ctx, hnm: str, day: str, timestamp: str):
     try:
         datetime_obj = parser.parse(timestamp)
 
-        utc_timestamp = int(datetime_obj.timestamp()) + (21 * 3600)
+        utc_timestamp = int(datetime_obj.timestamp())
+        if original_hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
+            utc_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
+        else:
+            utc_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
     except (ValueError, OverflowError):
-        await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/ddmmyy\nhh:mm:ss/hhmmss\nAny combination of the 2.")
+        await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/yymmdd\nhh:mm:ss/hhmmss\nAny combination of the 2.")
         return
 
     async for message in channel.history(limit=None):
-        if message.author == bot.user and message.content.startswith(f"- {hnm}"):
+        if message.author == bot.user and message.content.startswith(f"- {original_hnm}"):
             await message.delete()
 
     if utc_timestamp:
-        await channel.send(f"- {hnm} (**{day}**): <t:{utc_timestamp}:T> <t:{utc_timestamp}:R>")
+        await channel.send(f"- {original_hnm} (**{day}**): <t:{utc_timestamp}:T> <t:{utc_timestamp}:R>")
     else:
-        await channel.send(f"- {hnm}")
+        await channel.send(f"- {original_hnm}")
 
     await resend(ctx)  # Trigger the resend command after handling the hnm command
+
 
 @bot.command()
 async def resend(ctx):
