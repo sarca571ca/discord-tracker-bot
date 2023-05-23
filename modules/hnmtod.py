@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from dateutil import parser
+import time
 import datetime
 
 intents = discord.Intents.all()
@@ -51,7 +51,7 @@ async def ShikigamiWeapon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
     await handle_hnm_command(ctx, "Shikigami Weapon", day, timestamp)
 
 @bot.command(aliases=["kv", "kingv", "kingvine"])
-async def ShikigamiWeapon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def KingVinegarroon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
     await handle_hnm_command(ctx, "King Vinegarroon", day, timestamp)
 
 
@@ -70,19 +70,20 @@ async def handle_hnm_command(ctx, hnm: str, day: str, timestamp: str):
         response = await bot.wait_for("message", check=lambda message: message.author == ctx.author)
         input_parts = response.content.split(maxsplit=1)
         day = input_parts[0]
-        timestamp = input_parts[1] if len(input_parts) > 1 else "xx:xx:xx"
+        timestamp = input_parts[1]
 
     channel_id = 1110052586561744896
     channel = bot.get_channel(channel_id)
 
-    try:
-        datetime_obj = parser.parse(timestamp)
+    date_format = "%Y%m%d %H%M%S"
+    parse_date = datetime.datetime.strptime(timestamp, date_format)
+    unix_timestamp = int(time.mktime(parse_date.timetuple()))
 
-        utc_timestamp = int(datetime_obj.timestamp())
+    try:
         if original_hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
-            utc_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
+            unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
         else:
-            utc_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
+            unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
     except (ValueError, OverflowError):
         await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/yymmdd\nhh:mm:ss/hhmmss\nAny combination of the 2.")
         return
@@ -91,16 +92,16 @@ async def handle_hnm_command(ctx, hnm: str, day: str, timestamp: str):
         if message.author == bot.user and message.content.startswith(f"- {original_hnm}"):
             await message.delete()
 
-    if utc_timestamp:
-        await channel.send(f"- {original_hnm} (**{day}**): <t:{utc_timestamp}:T> <t:{utc_timestamp}:R>")
+    if unix_timestamp:
+        await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
     else:
         await channel.send(f"- {original_hnm}")
 
-    await resend(ctx)  # Trigger the resend command after handling the hnm command
+    await sort(ctx)  # Trigger the sort command after handling the hnm command
 
 
 @bot.command()
-async def resend(ctx):
+async def sort(ctx):
     channel_id = 1110052586561744896
     channel = bot.get_channel(channel_id)
 
@@ -125,4 +126,4 @@ def get_utc_timestamp(message):
     timestamp = message.content[timestamp_start:timestamp_end]
     return int(timestamp)
 
-bot.run('MTEwODY1MTQxMDI4NDg4ODA2NA.GfstjG.Kdu97sk1ktv43ukZ82NmnrCsnrI0nL46HqQNos')
+bot.run('MTExMDM3NjUyNjgwMjg1Mzk3OQ.GxNguG.7r2bQPC8w-USwXEb0VCUKS-gk85266IBF-XcWM') # wd-tod token

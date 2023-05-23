@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY tools/requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "dkp-bot.py"]
+CMD ["python", "modules/hnm-tod.py"]

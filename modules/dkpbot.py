@@ -60,51 +60,6 @@ async def create_channel_task():
                                                                   topic="\nPlease x in to have your dkp recorded!")
                         await channel.edit(position=hnm_times_channel.position + 1)
 
-@tasks.loop(seconds=10)
-async def move_for_review():
-    guild_id = 876434275661135982  # Replace with your guild ID
-    output_channel_id = 1110425188962676786  # Replace with your output channel ID
-    target_channel_id = 1110052586561744896  # Replace with your target channel ID
-    dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
-
-    guild = bot.get_guild(guild_id)
-    output_channel = bot.get_channel(output_channel_id)
-    target_channel = bot.get_channel(target_channel_id)
-    dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
-
-    now = int(time.time())
-    target_time = datetime.datetime.fromtimestamp(now)
-
-    async for message in target_channel.history(limit=None, oldest_first=True):
-        if message.content.startswith("-"):
-            channel_name = message.content[2:7].strip()
-
-            # Extract the day
-            day_start = message.content.find("(")
-            day_end = message.content.find(")")
-            if day_start != -1 and day_end != -1:
-                raw_day = message.content[day_start + 1:day_end].strip()
-                day = ref(raw_day)
-
-            # Extract UTC timestamp
-            utc_start = message.content.find("<t:")
-            utc_end = message.content.find(":T>")
-            if utc_start != -1 and utc_end != -1:
-                utc = int(message.content[utc_start + 3:utc_end])
-                dt = datetime.datetime.utcfromtimestamp(utc)
-                date = dt.strftime("%b%d").lower()
-                hnm = channel_name.upper()
-
-                # Addding 4 hours to compare to the target_time
-                hnm_time = datetime.datetime.fromtimestamp(utc + (4 * 3600))
-                await output_channel.send(f"hnm: {hnm_time} >= Curent: {target_time}")
-                # Move channels if 4 hours has passed the hnm camp time
-                if not hnm_time >= target_time:
-                    channel_name = f"{date}-{hnm}{day}".lower()
-                    existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                    if existing_channel:
-                        await existing_channel.edit(category=dkp_review_category)
-
 def ref(text):
     # Remove any formatting (e.g., **bold**, *italic*, __underline__, ~~strikethrough~~, etc.)
     pattern = r'(\*\*|\*|__|~~)(.*?)(\*\*|\*|__|~~)'
@@ -116,7 +71,6 @@ def ref(text):
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
-    move_for_review.start()
 
 @bot.event
 async def on_message(message):
