@@ -3,21 +3,23 @@ from discord.ext import commands, tasks
 import time
 import datetime
 import re
+import bottoken
 
 intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
+# Variables for the server
+guild_id = 1111122500038967316  # Replace with your guild ID
+hnm_times = 1111122932379422877 # Replace with the HNM TIMES channel ID
+bot_id = bottoken.wd_dkp_bot
 @tasks.loop(minutes=1)
 async def create_channel_task():
-    guild_id = 876434275661135982  # Replace with your guild ID
     category_name = "HNM ATTENDANCE"
-    output_channel_id = 1110425188962676786  # Replace with your output channel ID
-    hnm_times_channel_id = 1110052586561744896  # Replace with your hnm-times channel ID
+    hnm_times_channel_id = hnm_times
+    executed_channels = set()
 
     guild = bot.get_guild(guild_id)
     category = discord.utils.get(guild.categories, name=category_name)
-    output_channel = bot.get_channel(output_channel_id)
     hnm_times_channel = bot.get_channel(hnm_times_channel_id)
 
     if not category:
@@ -46,9 +48,10 @@ async def create_channel_task():
                 dt = datetime.datetime.utcfromtimestamp(utc)
                 date = dt.strftime("%b%d").lower()
                 hnm = channel_name.upper()
+                hnm_name = message.content[:message.content.find("(")].strip()
 
                 # Subtract 10 minutes from the posted time and compare it to target_time
-                hnm_time = datetime.datetime.fromtimestamp(utc - (10 * 60))
+                hnm_time = datetime.datetime.fromtimestamp(utc - (30 * 60))
 
                 # Create the channel inside the category with the calculated time
                 if hnm_time <= target_time:
@@ -56,19 +59,20 @@ async def create_channel_task():
                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
 
                     if not existing_channel:
-                        channel = await guild.create_text_channel(channel_name, category=category,
-                                                                  topic="\nPlease x in to have your dkp recorded!")
+                        channel = await guild.create_text_channel(channel_name, category=category)
                         await channel.edit(position=hnm_times_channel.position + 1)
+                        await channel.send(f"@everyone First window in 30-Minutes {hnm_name}")
 
-@tasks.loop(seconds=10)
+                        if channel.id not in executed_channels:
+                            await channel.send("Window in 10-Minutes 'x' in.\n----------------------------------------------------")
+                            executed_channels.add(channel.id)
+
+@tasks.loop(hours=1)
 async def move_for_review():
-    guild_id = 876434275661135982  # Replace with your guild ID
-    output_channel_id = 1110425188962676786  # Replace with your output channel ID
-    target_channel_id = 1110052586561744896  # Replace with your target channel ID
+    target_channel_id = hnm_times  # Replace with your target channel ID
     dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
 
     guild = bot.get_guild(guild_id)
-    output_channel = bot.get_channel(output_channel_id)
     target_channel = bot.get_channel(target_channel_id)
     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
 
@@ -97,20 +101,13 @@ async def move_for_review():
 
                 # Addding 4 hours to compare to the target_time
                 hnm_time = datetime.datetime.fromtimestamp(utc + (4 * 3600))
-                await output_channel.send(f"hnm: {hnm_time} >= Curent: {target_time}")
+
                 # Move channels if 4 hours has passed the hnm camp time
                 if not hnm_time >= target_time:
                     channel_name = f"{date}-{hnm}{day}".lower()
                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
                     if existing_channel:
                         await existing_channel.edit(category=dkp_review_category)
-
-def ref(text):
-    # Remove any formatting (e.g., **bold**, *italic*, __underline__, ~~strikethrough~~, etc.)
-    pattern = r'(\*\*|\*|__|~~)(.*?)(\*\*|\*|__|~~)'
-    stripped_text = re.sub(pattern, r'\2', text)
-
-    return stripped_text
 
 @bot.event
 async def on_ready():
@@ -125,84 +122,57 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+# This is a test mob to help with testing
+@bot.command(aliases=["t"])
+async def test(ctx, day, *, timestamp):
+    await handle_hnm_command(ctx, "Test", day, timestamp)
 
 @bot.command(aliases=["faf", "fafnir"])
-async def Fafnir(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def Fafnir(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Fafnir", day, timestamp)
 
-
 @bot.command(aliases=["ad", "ada", "adam", "adamantoise"])
-async def Adamantoise(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def Adamantoise(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Adamantoise", day, timestamp)
 
-
 @bot.command(aliases=["be", "behe", "behemoth"])
-async def Behemoth(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def Behemoth(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Behemoth", day, timestamp)
 
-
-@bot.command(aliases=["ka"])
-async def KingArthro(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+@bot.command(aliases=["ka", "kinga"])
+async def KingArthro(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "King Arthro", day, timestamp)
 
-
 @bot.command(aliases=["sim"])
-async def Simurgh(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def Simurgh(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Simurgh", day, timestamp)
 
-
 @bot.command(aliases=["shi", "shiki", "shikigami"])
-async def ShikigamiWeapon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def ShikigamiWeapon(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Shikigami Weapon", day, timestamp)
 
 @bot.command(aliases=["kv", "kingv", "kingvine"])
-async def KingVinegarroon(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def KingVinegarroon(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "King Vinegarroon", day, timestamp)
 
-
 @bot.command(aliases=["vrt", "vrtr", "vrtra"])
-async def Vrtra(ctx, day: str = None, *, timestamp: str = "xx:xx:xx"):
+async def Vrtra(ctx, day, *, timestamp):
     await handle_hnm_command(ctx, "Vrtra", day, timestamp)
 
-async def handle_hnm_command(ctx, hnm: str, day: str, timestamp: str):
-    original_hnm = hnm  # Store the original HNM name
+# Various command tools to help testing/management of the bot
+# Deletes all messages in the channel of the command
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def clearch(ctx):
+    channel = ctx.channel
+    await ctx.message.delete()  # Delete the command message
 
-    if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
-        hnm = "GroundKings"
-
-    if day is None:
-        await ctx.author.send(f"Please provide the day and timestamp for {original_hnm}:")
-        response = await bot.wait_for("message", check=lambda message: message.author == ctx.author)
-        input_parts = response.content.split(maxsplit=1)
-        day = input_parts[0]
-        timestamp = input_parts[1]
-
-    channel_id = 1110052586561744896
-    channel = bot.get_channel(channel_id)
-
-    date_format = "%Y%m%d %H%M%S"
-    parse_date = datetime.datetime.strptime(timestamp, date_format)
-    unix_timestamp = int(time.mktime(parse_date.timetuple()))
-
-    try:
-        if original_hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
-            unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
-        else:
-            unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
-    except (ValueError, OverflowError):
-        await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/yymmdd\nhh:mm:ss/hhmmss\nAny combination of the 2.")
-        return
-
+    deleted_messages = 0
     async for message in channel.history(limit=None):
-        if message.author == bot.user and message.content.startswith(f"- {original_hnm}"):
-            await message.delete()
+        await message.delete()
+        deleted_messages += 1
 
-    if unix_timestamp:
-        await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
-    else:
-        await channel.send(f"- {original_hnm}")
-
-    await sort(ctx)  # Trigger the sort command after handling the hnm command
+    print(f'Deleted {deleted_messages} messages in {channel.name}')
 
 # Deletes all channels except target_channel_ids. Used for testing only removed before production.
 @bot.command()
@@ -230,7 +200,7 @@ async def rc(ctx):
 # Command used to sort the hnm-times
 @bot.command()
 async def sort(ctx):
-    channel_id = 1110052586561744896
+    channel_id = hnm_times
     channel = bot.get_channel(channel_id)
 
     messages = []
@@ -246,6 +216,86 @@ async def sort(ctx):
         await message.delete()
         await channel.send(content)
 
+# Helpers can probably move these to a module later on for readability
+async def handle_hnm_command(ctx, hnm, day, timestamp):
+    original_hnm = hnm  # Store the original HNM name
+
+    if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
+        hnm = "GroundKings"
+
+    channel_id = hnm_times
+    channel = bot.get_channel(channel_id)
+
+    # date_format = "%Y%m%d %H%M%S"
+
+    # List of accepted date formats
+    date_formats = ["%Y-%m-%d %H%M%S", "%Y%m%d %H%M%S", "%y%m%d %H%M%S", "%m%d%Y %H%M%S", "%m%d%Y %H%M%S"]
+    time_formats = ["%H%M%S", "%H:%M:%S", "%h:%M:%S"]
+    # Current date
+    current_date = datetime.date.today()
+
+    # Check if the provided timestamp matches any of the accepted formats
+    valid_format = False
+    parsed_datetime = None
+    for date_format in date_formats:
+        try:
+            # Try parsing the timestamp with the current format
+            parsed_datetime = datetime.datetime.strptime(timestamp, date_format)
+            valid_format = True
+            break
+        except ValueError:
+            pass
+
+    # If the timestamp does not match any accepted formats, try parsing with the '%H%M%S' format
+    if not valid_format:
+        for time_format in time_formats:
+            try:
+                # Try parsing the timestamp with the current format
+                parsed_time = datetime.datetime.strptime(timestamp, time_format).time()
+                parsed_datetime = datetime.datetime.combine(current_date, parsed_time)
+                valid_format = True
+                break
+            except ValueError:
+                pass
+
+    if valid_format:
+        # Check if the parsed datetime is in the future
+        if parsed_datetime > datetime.datetime.now():
+            # Subtract one day from the current date
+            current_date -= datetime.timedelta(days=1)
+
+        # Combine the current date (or previous day) with the parsed time
+        parsed_datetime = datetime.datetime.combine(current_date, parsed_datetime.time())
+
+        # Convert the parsed datetime to a Unix timestamp
+        unix_timestamp = int(parsed_datetime.timestamp())
+    else:
+        # Invalid timestamp format provided
+        print("Invalid timestamp format")
+
+    # parse_date = datetime.datetime.strptime(timestamp, date_format)
+    # unix_timestamp = int(time.mktime(parse_date.timetuple()))
+
+    try:
+        if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro"]:
+            unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
+        else:
+            unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
+    except (ValueError, OverflowError):
+        await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/yymmdd\nhh:mm:ss/hhmmss\nAny combination of the 2.")
+        return
+
+    async for message in channel.history(limit=None):
+        if message.author == bot.user and message.content.startswith(f"- {original_hnm}"):
+            await message.delete()
+
+    if unix_timestamp:
+        await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+    else:
+        await channel.send(f"- {original_hnm}")
+
+    await sort(ctx)  # Trigger the sort command after handling the hnm command
+
 def get_utc_timestamp(message):
     if "<t:" not in message.content:
         return 0
@@ -254,4 +304,11 @@ def get_utc_timestamp(message):
     timestamp = message.content[timestamp_start:timestamp_end]
     return int(timestamp)
 
-bot.run('MTEwODY1MTQxMDI4NDg4ODA2NA.GfstjG.Kdu97sk1ktv43ukZ82NmnrCsnrI0nL46HqQNos') # wd-dkp-bot
+def ref(text):
+    # Remove any formatting (e.g., **bold**, *italic*, __underline__, ~~strikethrough~~, etc.)
+    pattern = r'(\*\*|\*|__|~~)(.*?)(\*\*|\*|__|~~)'
+    stripped_text = re.sub(pattern, r'\2', text)
+
+    return stripped_text
+
+bot.run(bot_id) # wd-dkp-bot

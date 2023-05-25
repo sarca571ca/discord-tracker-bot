@@ -8,4 +8,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "modules/hnm-tod.py"]
+CMD ["python", "t.py"]
