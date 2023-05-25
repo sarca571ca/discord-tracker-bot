@@ -12,6 +12,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 guild_id = 876434275661135982  # Replace with your guild ID
 hnm_times = 1110052586561744896 # Replace with the HNM TIMES channel ID
 bot_id = bottoken.wd_tod
+
 @tasks.loop(minutes=1)
 async def create_channel_task():
     category_name = "HNM ATTENDANCE"
