@@ -11,6 +11,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Variables for the server
 guild_id = 876434275661135982  # Replace with your guild ID
 hnm_times = 1110052586561744896 # Replace with the HNM TIMES channel ID
+bot_commands = 1110076161201020949 # Replace with bot-commands channel ID
 bot_id = bottoken.wd_tod
 
 @tasks.loop(minutes=1)
@@ -32,7 +33,6 @@ async def create_channel_task():
     # Read messages from the target channels
     async for message in hnm_times_channel.history(limit=None, oldest_first=True):
         if message.content.startswith("-"):
-            channel_name = message.content[2:7].strip()
 
             # Extract the day
             day_start = message.content.find("(")
@@ -40,6 +40,22 @@ async def create_channel_task():
             if day_start != -1 and day_end != -1:
                 raw_day = message.content[day_start + 1:day_end].strip()
                 day = ref(raw_day)
+
+            if message.content.__contains__("King Vinegarroon"):
+                channel_name = "kv"
+            elif message.content.__contains__("King Arthro"):
+                channel_name = "ka"
+            else:
+                if int(day) >= 4:
+                    nq = message.content[2:5].strip()
+                    print(nq)
+                    hq_start = message.content.find("/")
+                    hq_end = message.content.find("(")
+                    hq = message.content[hq_start].strip() # Having issues here outputing 1st 3 letters of nq/hq and channels contrinually are created
+                    print(hq)
+                    channel_name = f"{nq}/{hq}"
+                else:
+                    channel_name = message.content[2:7].strip()
 
             # Extract UTC timestamp
             utc_start = message.content.find("<t:")
@@ -56,7 +72,13 @@ async def create_channel_task():
 
                 # Create the channel inside the category with the calculated time
                 if hnm_time <= target_time:
-                    channel_name = f"{date}-{hnm}{day}".lower()
+                    if message.content.__contains__("King Vinegarroon"):
+                        channel_name = f"{date}-{hnm}".lower()
+                    elif message.content.__contains__("King Arthro"):
+                        channel_name = f"{date}-{hnm}".lower()
+                    else:
+                        channel_name = f"{date}-{hnm}{day}".lower()
+
                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
 
                     if not existing_channel:
@@ -90,7 +112,8 @@ async def move_for_review():
             if day_start != -1 and day_end != -1:
                 raw_day = message.content[day_start + 1:day_end].strip()
                 day = ref(raw_day)
-
+            else:
+                day = None
             # Extract UTC timestamp
             utc_start = message.content.find("<t:")
             utc_end = message.content.find(":T>")
@@ -105,7 +128,10 @@ async def move_for_review():
 
                 # Move channels if 4 hours has passed the hnm camp time
                 if not hnm_time >= target_time:
-                    channel_name = f"{date}-{hnm}{day}".lower()
+                    if day == None:
+                        channel_name = f"{date}-{hnm}".lower()
+                    else:
+                        channel_name = f"{date}-{hnm}{day}".lower()
                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
                     if existing_channel:
                         await existing_channel.edit(category=dkp_review_category)
@@ -126,39 +152,39 @@ async def on_message(message):
 # This is a test mob to help with testing
 @bot.command(aliases=["t"])
 async def test(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Test", day, timestamp)
+    await handle_hnm_command(ctx, "Test", None, day, timestamp)
 
 @bot.command(aliases=["faf", "fafnir"])
 async def Fafnir(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Fafnir", day, timestamp)
+    await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp)
 
 @bot.command(aliases=["ad", "ada", "adam", "adamantoise"])
 async def Adamantoise(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Adamantoise", day, timestamp)
+    await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp)
 
 @bot.command(aliases=["be", "behe", "behemoth"])
 async def Behemoth(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Behemoth", day, timestamp)
+    await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp)
 
 @bot.command(aliases=["ka", "kinga"])
 async def KingArthro(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "King Arthro", day, timestamp)
+    await handle_hnm_command(ctx, "King Arthro", None, day, timestamp)
 
 @bot.command(aliases=["sim"])
 async def Simurgh(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Simurgh", day, timestamp)
+    await handle_hnm_command(ctx, "Simurgh", None, day, timestamp)
 
 @bot.command(aliases=["shi", "shiki", "shikigami"])
 async def ShikigamiWeapon(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Shikigami Weapon", day, timestamp)
+    await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp)
 
 @bot.command(aliases=["kv", "kingv", "kingvine"])
 async def KingVinegarroon(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "King Vinegarroon", day, timestamp)
+    await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp)
 
 @bot.command(aliases=["vrt", "vrtr", "vrtra"])
 async def Vrtra(ctx, day, *, timestamp):
-    await handle_hnm_command(ctx, "Vrtra", day, timestamp)
+    await handle_hnm_command(ctx, "Vrtra", None, day, timestamp)
 
 # Various command tools to help testing/management of the bot
 # Deletes all messages in the channel of the command
@@ -180,7 +206,7 @@ async def clearch(ctx):
 async def rc(ctx):
     guild = ctx.guild
     category_name = "HNM ATTENDANCE"
-    target_channel_ids = [1110076161201020949, 1110052586561744896]  # Replace with the actual channel IDs
+    target_channel_ids = [bot_commands, hnm_times]  # Replace with the actual channel IDs
 
     # Check if the category exists
     category = discord.utils.get(guild.categories, name=category_name)
@@ -218,7 +244,7 @@ async def sort(ctx):
         await channel.send(content)
 
 # Helpers can probably move these to a module later on for readability
-async def handle_hnm_command(ctx, hnm, day, timestamp):
+async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
 
     if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
@@ -292,7 +318,15 @@ async def handle_hnm_command(ctx, hnm, day, timestamp):
             await message.delete()
 
     if unix_timestamp:
-        await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+        if original_hnm == "King Vinegarroon":
+            await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+        elif original_hnm == "King Arthro":
+            await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+        else:
+            if int(day) >= 4:
+                await channel.send(f"- {original_hnm}/{hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            else:
+                await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
     else:
         await channel.send(f"- {original_hnm}")
 
