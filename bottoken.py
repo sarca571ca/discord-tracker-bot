@@ -1,2 +1,0 @@
-wd_tod = 'MTExMDM3NjUyNjgwMjg1Mzk3OQ.G2Tawc.177pwcnIB_86Bs0cGe8Z4vCQUGAt_nnGbClebU'
-wd_dkp_bot = 'MTEwODY1MTQxMDI4NDg4ODA2NA.GUPNT0.6sK5m-C7VUXsGQxWmaiAn3dtBqA1AHcDyB0_Pw'
