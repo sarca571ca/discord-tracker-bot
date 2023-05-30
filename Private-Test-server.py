@@ -3,19 +3,22 @@ from discord.ext import commands, tasks
 import time
 import datetime
 import re
-import bottoken
+import serversettings as ss
 import os
 import pandas as pd
+import asyncio
 
 intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 # Variables for the server
-guild_id = 876434275661135982  # Replace with your guild ID
-hnm_times = 1110052586561744896 # Replace with the HNM TIMES channel ID
-bot_commands = 1110076161201020949 # Replace with bot-commands channel ID
-bot_id = bottoken.wd_tod
+guild_id = ss.wd_guild                # Replace with your guild ID
+hnm_times =  ss.wd_hnm_times          # Replace with the HNM TIMES channel ID
+bot_commands = ss.wd_bot_commands     # Replace with bot-commands channel ID
+bot_id = ss.wd_tod                    # Replace with Bot Token
 
+async def background_window_manager(channel_name):
+    await window_manager(channel_name)
 
 @tasks.loop(minutes=1)
 async def create_channel_task():
@@ -28,15 +31,12 @@ async def create_channel_task():
 #       scouting allowed so the channel is not created.
 #       - In the same scenario but its day 3 behe so scouting is allowed and a channel
 #       is created.
-#   - Prevent channels from being created after 70-minutes for Ground Kings and KA
-#   - Prevent channels from being created after 20-minutes for Shiki spawns
 #   - Need to remove the window management from the function an move to another task
 #   - Grand Wyrvn management still needs to be implemented
 ########################################################################################
 
     category_name = "HNM ATTENDANCE"
     hnm_times_channel_id = hnm_times
-    executed_channels = set()
 
     guild = bot.get_guild(guild_id)
     category = discord.utils.get(guild.categories, name=category_name)
@@ -58,20 +58,22 @@ async def create_channel_task():
             if day_start != -1 and day_end != -1:
                 raw_day = message.content[day_start + 1:day_end].strip()
                 day = ref(raw_day)
+            else:
+                day = None
 
-            if message.content.__contains__("King Vinegarroon"):
-                continue
-            elif message.content.__contains__("King Arthro"):
+            if "King Vinegarroon" in message.content:
+                 continue
+            elif "King Arthro" in message.content:
                 channel_name = "ka"
             else:
-                if int(day) >= 4:
+                if day == None or int(day) <= 3:
+                    channel_name = message.content[2:5].strip()
+                elif int(day) >= 4:
                     nq = message.content[2:5].strip()
                     hq_start = message.content.find("/") + 1
                     hq_end = message.content.find("(")
                     hq = message.content[hq_start:hq_end].strip()[:3]
                     channel_name = f"{nq}{hq}"
-                else:
-                    channel_name = message.content[2:5].strip()
 
             # Extract UTC timestamp
             utc_start = message.content.find("<t:")
@@ -81,47 +83,28 @@ async def create_channel_task():
                 dt = datetime.datetime.utcfromtimestamp(utc)
                 date = dt.strftime("%b%d").lower()
                 hnm = channel_name.upper()
-                hnm_name = message.content[:message.content.find("(")].strip()
+                hnm_name = message.content
 
                 # Subtract 10 minutes from the posted time and compare it to target_time
-                hnm_time = datetime.datetime.fromtimestamp(utc - (30 * 60))
+                hnm_time = datetime.datetime.fromtimestamp(utc - (ss.make_channel * 60))
+                hnm_window_end = datetime.datetime.fromtimestamp(utc + (1 * 3600))
 
                 # Create the channel inside the category with the calculated time
-                if hnm_time <= target_time:
-                    if message.content.__contains__("King Vinegarroon"):
-                        channel_name = f"{date}-{hnm}".lower()
-                    elif message.content.__contains__("King Arthro"):
-                        channel_name = f"{date}-{hnm}".lower()
-                    else:
-                        channel_name = f"{date}-{hnm}{day}".lower()
+                if hnm_window_end >= target_time:
+                    if hnm_time <= target_time:
+                        if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
+                            channel_name = f"{date}-{hnm}{day}".lower()
+                        else:
+                            channel_name = f"{date}-{hnm}".lower()
 
-                    existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                    if not existing_channel:
-                        channel = await guild.create_text_channel(channel_name, category=category)
-                        await channel.edit(position=hnm_times_channel.position + 1)
-                        await channel.send(f"@everyone First window in 30-Minutes {hnm_name}")
+                        existing_channel = discord.utils.get(guild.channels, name=channel_name)
+                        if not existing_channel:
+                            channel = await guild.create_text_channel(channel_name, category=category)
+                            await channel.edit(position=hnm_times_channel.position + 1)
+                            await channel.send(f"{hnm_name}")
+                            await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
+                            asyncio.create_task(background_window_manager(channel_name))  # Run window_manager in the background
 
-                        if channel.id not in executed_channels:
-                            await channel.send("Window in 10-Minutes 'x' in.")
-                            await channel.send("----------------------------------------------------")
-                            executed_channels.add(channel.id)
-
-@tasks.loop(minutes=5)
-async def window_manager():
-#######################################################################################
-# window_manager_______________________________________________________________________
-# Manages the windows within the channels
-# ToDo:
-#   - Ground Kings, Sim and KA
-#       - Post 1st window close 10-minutes after Spawn.
-#       - Repeat following windows until either ToD is posted or all 7 windows pass
-#   - KV is moderated by linkshell not the bot
-#   - Grand Wyvrn
-#       - Open windows 10-minutes prior to spawn and close them 1-minute after spawn
-#       - Repeat until it spawns
-#   - At the end of a camp report is generated and post for review in the channel
-########################################################################################
-    window_manager_var = None
 
 @tasks.loop(hours=1)
 async def move_for_review():
@@ -129,7 +112,7 @@ async def move_for_review():
 # move_for_review______________________________________________________________________
 # Moves the channel's for DKP Review 4-hours after window closes
 # ToDo:
-#   -
+#   - Might need to shorten this time depending
 ########################################################################################
     target_channel_id = hnm_times  # Replace with your target channel ID
     dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
@@ -163,7 +146,7 @@ async def move_for_review():
                 hnm = channel_name.upper()
 
                 # Addding 4 hours to compare to the target_time
-                hnm_time = datetime.datetime.fromtimestamp(utc + (4 * 3600))
+                hnm_time = datetime.datetime.fromtimestamp(utc + (ss.move_review * 3600))
 
                 # Move channels if 4 hours has passed the hnm camp time
                 if not hnm_time >= target_time:
@@ -180,6 +163,7 @@ async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
     move_for_review.start()
+    # window_manager.start()
 
 @bot.event
 async def on_message(message):
@@ -189,14 +173,13 @@ async def on_message(message):
     if isinstance(message.channel, discord.DMChannel):
         if message.content.startswith('!help'):
             await message.author.send("This is the help command response.")
-
         else:
             await message.author.send(f"Please use the `!help` command in {bot_channel.mention}")
 
-    else:
-        # Check if the message is sent in the 'bot-commands' channel
-        if message.channel.name == 'bot-commands':
-            await message.delete()
+    # else:
+    #     # Check if the message is sent in the 'bot-commands' channel
+    #     if message.channel.name == 'bot-commands':
+    #         await message.delete()
 
     await bot.process_commands(message)
 
@@ -472,11 +455,77 @@ async def sort(ctx):
         await channel.send(content)
 
 # Helpers can probably move these to a module later on for readability
+async def window_manager(channel_name):
+#######################################################################################
+# window_manager_______________________________________________________________________
+# Manages the windows within the channels
+# ToDo:
+#   - Ground Kings, Sim and KA
+#       - Post 1st window close 10-minutes after Spawn.
+#       - Repeat following windows until either ToD is posted or all 7 windows pass
+#   - KV is moderated by linkshell not the bot
+#   - Grand Wyvrn
+#       - Open windows 10-minutes prior to spawn and close them 1-minute after spawn
+#       - Repeat until it spawns
+#   - At the end of a camp report is generated and post for review in the channel
+########################################################################################
+    now = datetime.datetime.now()
+    target_time = now + datetime.timedelta(seconds=80)
+
+    # Get the category by name
+    guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
+    category_name = "HNM ATTENDANCE"
+    category = discord.utils.get(guild.categories, name=category_name)
+    day = now.strftime("%b%d").lower()  # Get the current day in MMMDD format (e.g., Feb20)
+
+    if not category:
+        return
+
+    channels = category.channels
+
+    for channel in channels:
+        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and "kv" not in channel.name:
+            async for message in channel.history(limit=1, oldest_first=True):
+                # Extract the UTC timestamp
+                utc_start = message.content.find("<t:")
+                utc_end = message.content.find(":T>")
+                if utc_start != -1 and utc_end != -1:
+                    utc = message.content[utc_start + 3:utc_end]
+                    dt = datetime.datetime.fromtimestamp(int(utc))
+
+                    # Calculate the delay until the target time
+                    delay = dt - now
+                    # Send a "hi" message every 10 minutes until 62 minutes have passed
+                    if delay.total_seconds() > 0:
+                        await asyncio.sleep(delay.total_seconds())
+                    w = 1
+                    while now < target_time and w <= 7:
+                        async for message in channel.history(limit=None):
+                            if message.content.lower() in ["kill", "pop", "claim", "ours"]:
+                                # Stop the window manager loop
+                                print("Loops Broken")
+                                return await calculate_DKP(w - 1)
+
+                        await channel.send(f"-------------- Window {w} is now --------------")
+                        w += 1
+                        await asyncio.sleep(10)  # 10 minutes delay
+                        now = datetime.datetime.now()
+                    # break
+                    return await calculate_DKP(w - 1)
+
+# Build this function out to handle calculating dkp and listen for late x's in the channel
+async def calculate_DKP(w):
+    print(f"Windows Camped: {w}")
+
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
 
     if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
         hnm = "GroundKings"
+
+
+    day = int(day) + 1
+
 
     channel_id = hnm_times
     channel = bot.get_channel(channel_id)
@@ -537,7 +586,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
 
     try:
         if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro"]:
-            unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings
+            unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
         else:
             unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
     except (ValueError, OverflowError):
@@ -549,14 +598,14 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
             await message.delete()
 
     if unix_timestamp:
-        if original_hnm == "King Vinegarroon":
-            await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
-        elif original_hnm == "King Arthro":
+        if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"]:
             await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         else:
-            if int(day) >= 4:
+            if int(day) == 8: # Force HQ pop on day 8
+                await channel.send(f"- {hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif int(day) >= 4: # Possible HQ or NQ day 4-7
                 await channel.send(f"- {original_hnm}/{hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
-            else:
+            else: # NQ only
                 await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
     else:
         await channel.send(f"- {original_hnm}")

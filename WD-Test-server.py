@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 import time
 import datetime
 import re
-import bottoken
+import serversettings
 
 intents = discord.Intents.all()
 
@@ -11,7 +11,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Variables for the server
 guild_id = 1111122500038967316  # Replace with your guild ID
 hnm_times = 1111122932379422877 # Replace with the HNM TIMES channel ID
-bot_id = bottoken.wd_dkp_bot
+bot_id = serversettings.wd_dkp_bot
 @tasks.loop(minutes=1)
 async def create_channel_task():
     category_name = "HNM ATTENDANCE"
