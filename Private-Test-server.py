@@ -486,8 +486,8 @@ async def warn_ten(channel_name):
                     if delay.total_seconds() > 0:
                         await asyncio.sleep(delay.total_seconds())
                     await channel.send(f"-------- Window opens in 10-Minutes x in --------")
-                    await channel.send("""```x-in:  use 'x' for current window or 'x#' for a specific window. # = the window, x1 = window 1
-x-out: use 'o' for the current window or 'o#' for a specific window. # = the window, o4 = left window 4
+                    await channel.send("""```x-in:  use 'x' or 'x#' for a specific window. # = the window, x1 = window 1
+x-out: use 'o#' for a specific window. # = the window, o4 = left window 4
 
 Note: - Channel will be open for 1-hour past last possible spawn. Any late x-ins must be done before then
       or you will have to notifty an officer to adjust your DKP.
@@ -556,40 +556,23 @@ async def window_manager(channel_name):
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
     messages = []
-    window_number = 1
-    current_window_messages = []
+    authors_without_number = set()
+
     async for message in channel.history(limit=None):
-        if message.content.startswith('-------------- Window '):
-            if current_window_messages:
-                df = pd.DataFrame(current_window_messages, columns=['Author', 'Message'])
-                calculate_window_DKP(df, window_number)
-                current_window_messages = []
-                window_number += 1
+        if message.author.name != 'wd-tod':
+            if 'o' in message.content and not any(char.isdigit() for char in message.content):
+                messages.append((message.author.display_name, message.content))
+                authors_without_number.add(message.author.display_name)
 
-        current_window_messages.append((message.author.display_name, message.content))
+    df = pd.DataFrame(messages, columns=['author', 'message'])
 
-    if current_window_messages:
-        df = pd.DataFrame(current_window_messages, columns=['Author', 'Message'])
-        calculate_window_DKP(df, window_number)
-    print(f"Windows Camped: {w}")
+    # Sort the DataFrame by 'author' and 'message'
+    df_sorted = df.sort_values(['author', 'message'])
 
-def calculate_window_DKP(df, window_number):
-    # Check if there are 'x' or 'o' messages in the window
-    x_o_messages = df[df['Message'].isin(['x', 'o'])]
-
-    if len(x_o_messages) == 1:
-        author = x_o_messages.iloc[0]['Author']
-        dkp_value = int(df['Message'].str.extract(r'x(\d+)|o(\d+)', expand=False).dropna().values[0])
-
-        # Perform DKP calculation for the single 'x' or 'o' message
-        print(f"Window {window_number}: Author: {author}, DKP Value: {dkp_value}")
-
-    # Pass other messages with an 'a' followed by an integer to the following 'x' or 'o' message
-    pass_messages = df[df['Message'].str.contains(r'a(\d+)')]['Message']
-    print(f"Window {window_number}: Pass Messages: {pass_messages.values}")
-
-
-    print(df)
+    print(df_sorted)
+    print("Authors without a number following 'o':")
+    for author in authors_without_number:
+        print(author)
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
