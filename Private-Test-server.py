@@ -17,8 +17,11 @@ hnm_times =  ss.wd_hnm_times          # Replace with the HNM TIMES channel ID
 bot_commands = ss.wd_bot_commands     # Replace with bot-commands channel ID
 bot_id = ss.wd_tod                    # Replace with Bot Token
 
-async def background_window_manager(channel_name):
+async def task_window_manager(channel_name):
     await window_manager(channel_name)
+
+async def task_warn_ten(channel_name):
+    await warn_ten(channel_name)
 
 @tasks.loop(minutes=1)
 async def create_channel_task():
@@ -31,7 +34,6 @@ async def create_channel_task():
 #       scouting allowed so the channel is not created.
 #       - In the same scenario but its day 3 behe so scouting is allowed and a channel
 #       is created.
-#   - Need to remove the window management from the function an move to another task
 #   - Grand Wyrvn management still needs to be implemented
 ########################################################################################
 
@@ -103,7 +105,8 @@ async def create_channel_task():
                             await channel.edit(position=hnm_times_channel.position + 1)
                             await channel.send(f"{hnm_name}")
                             await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
-                            asyncio.create_task(background_window_manager(channel_name))  # Run window_manager in the background
+                            asyncio.create_task(task_warn_ten(channel_name)) # Starts a task to post in channel 10-minutes before window
+                            asyncio.create_task(task_window_manager(channel_name))  # Starts a task to manage the window
 
 
 @tasks.loop(hours=1)
@@ -454,6 +457,45 @@ async def sort(ctx):
         await message.delete()
         await channel.send(content)
 
+async def warn_ten(channel_name):
+    now = datetime.datetime.now()
+
+    # Get the category by name
+    guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
+    category_name = "HNM ATTENDANCE"
+    category = discord.utils.get(guild.categories, name=category_name)
+
+    if not category:
+        return
+
+    channels = category.channels
+
+    for channel in channels:
+        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and "kv" not in channel.name:
+            async for message in channel.history(limit=1, oldest_first=True):
+                # Extract the UTC timestamp
+                utc_start = message.content.find("<t:")
+                utc_end = message.content.find(":T>")
+                if utc_start != -1 and utc_end != -1:
+                    utc = message.content[utc_start + 3:utc_end]
+                    dt = datetime.datetime.fromtimestamp(int(utc) - (10 * 60))
+
+                    # Determine the delay needed before window opens
+                    delay = dt - now
+                    # Sends window open message channel
+                    if delay.total_seconds() > 0:
+                        await asyncio.sleep(delay.total_seconds())
+                    await channel.send(f"-------- Window opens in 10-Minutes x in --------")
+                    await channel.send("""```x-in:  use 'x' for current window or 'x#' for a specific window. # = the window, x1 = window 1
+x-out: use 'o' for the current window or 'o#' for a specific window. # = the window, o4 = left window 4
+
+Note: - Channel will be open for 1-hour past last possible spawn. Any late x-ins must be done before then
+      or you will have to notifty an officer to adjust your DKP.
+      - Channel is moved to DKP Review section, where you can review your DKP and ask for corrections/do
+      late-late x-ins.```""")
+
+                    return
+
 # Helpers can probably move these to a module later on for readability
 async def window_manager(channel_name):
 #######################################################################################
@@ -463,20 +505,18 @@ async def window_manager(channel_name):
 #   - Ground Kings, Sim and KA
 #       - Post 1st window close 10-minutes after Spawn.
 #       - Repeat following windows until either ToD is posted or all 7 windows pass
-#   - KV is moderated by linkshell not the bot
 #   - Grand Wyvrn
 #       - Open windows 10-minutes prior to spawn and close them 1-minute after spawn
 #       - Repeat until it spawns
 #   - At the end of a camp report is generated and post for review in the channel
 ########################################################################################
     now = datetime.datetime.now()
-    target_time = now + datetime.timedelta(seconds=80)
+    target_time = now + datetime.timedelta(minutes=62)
 
     # Get the category by name
     guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
     category_name = "HNM ATTENDANCE"
     category = discord.utils.get(guild.categories, name=category_name)
-    day = now.strftime("%b%d").lower()  # Get the current day in MMMDD format (e.g., Feb20)
 
     if not category:
         return
@@ -504,18 +544,52 @@ async def window_manager(channel_name):
                             if message.content.lower() in ["kill", "pop", "claim", "ours"]:
                                 # Stop the window manager loop
                                 print("Loops Broken")
-                                return await calculate_DKP(w - 1)
+                                return await calculate_DKP(channel, channel_name, w - 1)
 
                         await channel.send(f"-------------- Window {w} is now --------------")
                         w += 1
                         await asyncio.sleep(10)  # 10 minutes delay
                         now = datetime.datetime.now()
                     # break
-                    return await calculate_DKP(w - 1)
+                    return await calculate_DKP(channel, channel_name, w - 1)
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
-async def calculate_DKP(w):
+async def calculate_DKP(channel, channel_name, w):
+    messages = []
+    window_number = 1
+    current_window_messages = []
+    async for message in channel.history(limit=None):
+        if message.content.startswith('-------------- Window '):
+            if current_window_messages:
+                df = pd.DataFrame(current_window_messages, columns=['Author', 'Message'])
+                calculate_window_DKP(df, window_number)
+                current_window_messages = []
+                window_number += 1
+
+        current_window_messages.append((message.author.display_name, message.content))
+
+    if current_window_messages:
+        df = pd.DataFrame(current_window_messages, columns=['Author', 'Message'])
+        calculate_window_DKP(df, window_number)
     print(f"Windows Camped: {w}")
+
+def calculate_window_DKP(df, window_number):
+    # Check if there are 'x' or 'o' messages in the window
+    x_o_messages = df[df['Message'].isin(['x', 'o'])]
+
+    if len(x_o_messages) == 1:
+        author = x_o_messages.iloc[0]['Author']
+        dkp_value = int(df['Message'].str.extract(r'x(\d+)|o(\d+)', expand=False).dropna().values[0])
+
+        # Perform DKP calculation for the single 'x' or 'o' message
+        print(f"Window {window_number}: Author: {author}, DKP Value: {dkp_value}")
+
+    # Pass other messages with an 'a' followed by an integer to the following 'x' or 'o' message
+    pass_messages = df[df['Message'].str.contains(r'a(\d+)')]['Message']
+    print(f"Window {window_number}: Pass Messages: {pass_messages.values}")
+
+
+    print(df)
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
