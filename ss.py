@@ -1,0 +1,34 @@
+bot_token = 'Put your bot tokken here'                                                      # Bot token goes in this field
+
+guild = 1234                                                                                # Guild ID
+hnm_times = 1234                                                                            # Channel ID where the camp times are posted
+bot_commands = 1234                                                                         # Designated bot-commands channel for setting ToD's
+make_channel = 30                                                                           # Makes a channel 30-Minutes before window
+move_review = 3                                                                             # Moves the channel for DKP Review 3-hours after last window
+archive_channel = 4                                                                         # Archive the channel as a csv on the bot server after 4 hours after review or when command !archive is issued.
+archive_wait = 5                                                                            # The amount aof days a channel can sit in the archive channel. This counts from when the channel was created.
+window_dkp = 0.25                                                                           # DKP values for camp windows for ground kings
+camp_kill_1_3_dkp = 2                                                                       # DKP values for camp and kill for NQ days
+kill_ada_beh_1_3_dkp = 0                                                                    # DKP values for kill only for NQ Ada and Behe
+kill_faf_1_3_dkp = 1                                                                        # DKP values for kill only for NQ Faf
+camp_kill_4plus_dkp = 4                                                                     # DKP values for camp and kill for HQ days
+kill_4plus_dkp = 1                                                                          # DKP values for kill only on HQ days
+camp_kill_dkp = 2                                                                           # DKP values for base camp and kill values for ka, kv, sim, shiki
+kill_kv_dkp = 1                                                                             # DKP values for kill only dkpy awarded for kv due to random spawn nature
+camp_dkp = 1                                                                                # DKP values for camp only for ka, kv, sim, shiki
+gw_camp_claim_dkp = 4                                                                       # DKP values for camp and claim on Grand Wyrvs
+gw_kill_dkp = 2                                                                             # DKP values for kill on Grand Wyrvns
+gw_window_dkp = 0.5                                                                         # DKP values for camp windows for Grand Wyvrns
+ignore_channels = ['kv', 'shi']                                                             # Used the prevent the sending of window messages to certain channels
+ignore_create_channels = ['King Vinegarroon']                                               # Used to prevent the creation of certain channels eg. KV because its random
+
+# This message will display when channel opens windows for x-ins 10 minutes prior
+window_message = """
+```x-in:  use 'x' or 'x#' for a specific window. # = the window, x1 = window 1
+x-out: use 'o#' for a specific window. # = the window, o4 = left window 4
+
+Note: - Channel will be open for 3-hours. Any late x-ins must be done before then
+      or you will have to notifty an officer to adjust your DKP.
+      - Channel is moved to DKP Review section, where you can review your DKP and ask for corrections/do
+      late-late x-ins.```
+"""
