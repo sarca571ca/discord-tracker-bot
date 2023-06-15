@@ -174,7 +174,7 @@ async def move_for_review():
 
 @tasks.loop(hours=24)  # Task runs every 24 hours
 async def delete_old_channels():
-    archive_category = discord.utils.get(bot.guilds[0].categories, name="ARCHIVE")  # Assuming the bot is in only one guild
+    archive_category = discord.utils.get(bot.guilds[0].categories, name="ATTENDANCE ARCHIVE")  # Assuming the bot is in only one guild
     if archive_category:
         for channel in archive_category.channels:
             if isinstance(channel, discord.TextChannel):
@@ -488,7 +488,7 @@ async def archive(ctx, option=None):
             df.to_csv(file_name, index=False)
 
             # Move the channel to the "Archive" category
-            archive_category = discord.utils.get(ctx.guild.categories, name="Archive")
+            archive_category = discord.utils.get(ctx.guild.categories, name="ATTENDANCE ARCHIVE")
             if archive_category:
                 await channel.edit(category=archive_category)
                 await ctx.send(f"Channel '{channel.name}' has been archived.")
@@ -529,7 +529,7 @@ async def archive(ctx, option=None):
         df.to_csv(file_name, index=False)
 
         # Move the channel to the "Archive" category
-        archive_category = discord.utils.get(ctx.guild.categories, name="Archive")
+        archive_category = discord.utils.get(ctx.guild.categories, name="ATTENDANCE ARCHIVE")
         if archive_category:
             await channel.edit(category=archive_category)
             await ctx.send(f"Channel '{channel.name}' has been archived.")
