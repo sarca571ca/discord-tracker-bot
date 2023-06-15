@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 import time
 import datetime
 import re
-import serversettings as ss             # Server specific variables see the ss.py for an example
+import ss             # Server specific variables see the ss.py and insert your values
 import os
 import pandas as pd
 import asyncio
@@ -15,7 +15,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 guild_id = ss.guild                # Replace with your guild ID
 hnm_times =  ss.hnm_times          # Replace with the HNM TIMES channel ID
 bot_commands = ss.bot_commands     # Replace with bot-commands channel ID
-bot_id = ss.tod                    # Replace with Bot Token
+bot_id = ss.wd_tod                    # Replace with Bot Token
 
 async def task_window_manager(channel_name):
     await window_manager(channel_name)
@@ -30,6 +30,8 @@ async def create_channel_task():
 # Task currently creates a channel 30 minutes prior to window and notifies everyone.
 # ToDo:
 #   - Grand Wyrvn management still needs to be implemented
+#   - Grand Wyrvn's will be managed by guild memembers
+#   - Need to set a priority system based on LS rules or
 ########################################################################################
 
     category_name = "HNM ATTENDANCE"
@@ -96,7 +98,7 @@ async def create_channel_task():
 
                         existing_channel = discord.utils.get(guild.channels, name=channel_name)
                         if not existing_channel:
-                            channel = await guild.create_text_channel(channel_name, category=category)
+                            channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
                             await channel.edit(position=hnm_times_channel.position + 1)
                             await channel.send(f"{hnm_name}")
                             await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
@@ -157,7 +159,7 @@ async def move_for_review():
                 hnm = channel_name.upper()
                 hnm_name = message.content
 
-                # Addding 4 hours to compare to the target_time
+                # Time to move channels
                 hnm_time = datetime.datetime.fromtimestamp(utc + (ss.move_review * 3600))
 
                 # Move channels if 4 hours has passed the hnm camp time
@@ -205,24 +207,6 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# This is a test mob to help with testing
-# @bot.command(aliases=["t"])
-# async def test(
-#     ctx,
-#     day: str = commands.parameter(
-#         default="Day",
-#         description="Used for HQ system, can be set to 0 for mobs that do not HQ"
-#     ),
-#     *,
-#     timestamp: str = commands.parameter(
-#         default="Timestamp",
-#         description="ToD of the mob in your TZ"
-#     )
-# ):
-#     await handle_hnm_command(ctx, "Test", None, day, timestamp)
-# test.brief = "General testing command for checking handle_hnm_command functions."
-# test.usage = "<day> <timestamp>"
-
 @bot.command(aliases=["faf", "fafnir"])
 async def Fafnir(
     ctx,
@@ -236,6 +220,14 @@ async def Fafnir(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp)
 Fafnir.brief = f"Used to set the ToD of Fafnir/Nidhogg."
 Fafnir.usage = "<day> <timestamp>"
@@ -253,6 +245,14 @@ async def Adamantoise(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp)
 Adamantoise.brief = f"Used to set the ToD of Adamantoise/Aspidochelone."
 Adamantoise.usage = "<day> <timestamp>"
@@ -270,6 +270,14 @@ async def Behemoth(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp)
 Behemoth.brief = f"Used to set the ToD of Behemoth/King Behemoth."
 Behemoth.usage = "<day> <timestamp>"
@@ -287,6 +295,14 @@ async def KingArthro(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "King Arthro", None, day, timestamp)
 KingArthro.brief = f"Used to set the ToD of King Arthro."
 KingArthro.usage = "<day> <timestamp>"
@@ -304,6 +320,14 @@ async def Simurgh(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Simurgh", None, day, timestamp)
 Simurgh.brief = f"Used to set the ToD of Simurgh."
 Simurgh.usage = "<day> <timestamp>"
@@ -321,6 +345,14 @@ async def ShikigamiWeapon(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp)
 ShikigamiWeapon.brief = f"Used to set the ToD of Shikigami Weapon."
 ShikigamiWeapon.usage = "<day> <timestamp>"
@@ -338,6 +370,14 @@ async def KingVinegarroon(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp)
 KingVinegarroon.brief = f"Used to set the ToD of King Vinegarroon."
 KingVinegarroon.usage = "<day> <timestamp>"
@@ -355,6 +395,14 @@ async def Vrtra(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Vrtra", None, day, timestamp)
 Vrtra.brief = f"Used to set the ToD of Vrtra."
 Vrtra.usage = "<day> <timestamp>"
@@ -372,6 +420,14 @@ async def Tiamat(
         description="ToD of the mob in your TZ"
     )
 ):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
     await handle_hnm_command(ctx, "Tiamat", None, day, timestamp)
 Tiamat.brief = f"Used to set the ToD of Tiamat."
 Tiamat.usage = "<day> <timestamp>"
@@ -594,24 +650,26 @@ async def window_manager(channel_name):
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
-    messages = []
-    authors_without_number = set()
+    print("Work in progress, maybe....we'll see.")
+    channel.send("~fin")
+    # messages = []
+    # authors_without_number = set()
 
-    async for message in channel.history(limit=None):
-        if message.author.name != 'wd-tod':
-            if 'o' in message.content and not any(char.isdigit() for char in message.content):
-                messages.append((message.author.display_name, message.content))
-                authors_without_number.add(message.author.display_name)
+    # async for message in channel.history(limit=None, oldest_first=True):
+    #     if message.author.name != 'wd-tod':
+    #         if 'o' in message.content and not any(char.isdigit() for char in message.content):
+    #             messages.append((message.author.display_name, message.content))
+    #             authors_without_number.add(message.author.display_name)
 
-    df = pd.DataFrame(messages, columns=['author', 'message'])
+    # df = pd.DataFrame(messages, columns=['author', 'message'])
 
-    # Sort the DataFrame by 'author' and 'message'
-    df_sorted = df.sort_values(['author', 'message'])
+    # # Sort the DataFrame by 'author' and 'message'
+    # df_sorted = df.sort_values(['author', 'message'])
 
-    print(df_sorted)
-    print("Authors without a number following 'o':")
-    for author in authors_without_number:
-        print(author)
+    # print(df_sorted)
+    # print("Authors without a number following 'o':")
+    # for author in authors_without_number:
+    #     print(author)
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
@@ -629,7 +687,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
 
     # Error handling when user doesnt enter a time after the day.
     if timestamp == None:
-        await ctx.author.send(f"No date/time provided for {original_hnm}.\nPlease resenthe command in {bot_channel.metion}")
+        await ctx.author.send(f"No date/time provided for {original_hnm}.\nPlease resend the command in {bot_channel.metion}")
     # List of accepted date formats
     date_formats = ["%Y-%m-%d %H%M%S", "%Y%m%d %H%M%S", "%y%m%d %H%M%S", "%m%d%Y %H%M%S", "%m%d%Y %H%M%S"]
     time_formats = ["%H%M%S", "%H:%M:%S", "%h:%M:%S"]
@@ -723,4 +781,4 @@ def ref(text):
 
     return stripped_text
 
-bot.run(bot_id) # wd-dkp-bot
+bot.run(bot_id)
