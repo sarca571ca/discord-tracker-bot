@@ -12,10 +12,13 @@ intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 # Variables for the server
-guild_id = ss.guild                # Replace with your guild ID
-hnm_times =  ss.hnm_times          # Replace with the HNM TIMES channel ID
-bot_commands = ss.bot_commands     # Replace with bot-commands channel ID
-bot_id = ss.wd_tod                    # Replace with Bot Token
+guild_id = ss.guild                         # Replace with your guild ID
+hnm_times =  ss.hnm_times                   # Replace with the HNM TIMES channel ID
+bot_commands = ss.bot_commands              # Replace with bot-commands channel ID
+bot_id = ss.bot_token                       # Replace with Bot Token
+dkp_review_category_name = "DKP REVIEW"
+hnm_att_category_name = "HNM ATTENDANCE"
+att_arch_category_name = "ATTENDANCE ARCHIVE"
 
 async def task_window_manager(channel_name):
     await window_manager(channel_name)
@@ -34,15 +37,14 @@ async def create_channel_task():
 #   - Need to set a priority system based on LS rules or
 ########################################################################################
 
-    category_name = "HNM ATTENDANCE"
     hnm_times_channel_id = hnm_times
 
     guild = bot.get_guild(guild_id)
-    category = discord.utils.get(guild.categories, name=category_name)
+    category = discord.utils.get(guild.categories, name=hnm_att_category_name)
     hnm_times_channel = bot.get_channel(hnm_times_channel_id)
 
     if not category:
-        category = await guild.create_category(category_name)
+        category = await guild.create_category(hnm_att_category_name)
 
     now = int(time.time())
     target_time = datetime.datetime.fromtimestamp(now)
@@ -72,7 +74,7 @@ async def create_channel_task():
                     hq_start = message.content.find("/") + 1
                     hq_end = message.content.find("(")
                     hq = message.content[hq_start:hq_end].strip()[:3]
-                    channel_name = f"{nq}{hq}"
+                    channel_name = f"{nq}"
 
             # Extract UTC timestamp
             utc_start = message.content.find("<t:")
@@ -106,75 +108,75 @@ async def create_channel_task():
                             asyncio.create_task(task_window_manager(channel_name))  # Starts a task to manage the window
 
 
-@tasks.loop(minutes=30)
-async def move_for_review():
-#######################################################################################
-# move_for_review______________________________________________________________________
-# Moves the channel's for DKP Review 3-hours from spawn time
-########################################################################################
-    target_channel_id = hnm_times  # Replace with your target channel ID
-    dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
+# @tasks.loop(minutes=5)
+# async def move_for_review():
+# #######################################################################################
+# # move_for_review______________________________________________________________________
+# # Moves the channel's for DKP Review 3-hours from spawn time
+# ########################################################################################
+#     target_channel_id = hnm_times  # Replace with your target channel ID
+#     dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
 
-    guild = bot.get_guild(guild_id)
-    target_channel = bot.get_channel(target_channel_id)
-    dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
+#     guild = bot.get_guild(guild_id)
+#     target_channel = bot.get_channel(target_channel_id)
+#     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
 
-    now = int(time.time())
-    target_time = datetime.datetime.fromtimestamp(now)
+#     now = int(time.time())
+#     target_time = datetime.datetime.fromtimestamp(now)
 
-    async for message in target_channel.history(limit=None, oldest_first=True):
-        if message.content.startswith("-"):
-            channel_name = message.content[2:5].strip()
+#     async for message in target_channel.history(limit=None, oldest_first=True):
+#         if message.content.startswith("-"):
+#             channel_name = message.content[2:5].strip()
 
-            # Extract the day
-            day_start = message.content.find("(")
-            day_end = message.content.find(")")
-            if day_start != -1 and day_end != -1:
-                raw_day = message.content[day_start + 1:day_end].strip()
-                day = ref(raw_day)
-            else:
-                day = None
+#             # Extract the day
+#             day_start = message.content.find("(")
+#             day_end = message.content.find(")")
+#             if day_start != -1 and day_end != -1:
+#                 raw_day = message.content[day_start + 1:day_end].strip()
+#                 day = ref(raw_day)
+#             else:
+#                 day = None
 
-            if any(keyword in message.content for keyword in ss.ignore_create_channels):
-                continue
-            elif "King Arthro" in message.content:
-                channel_name = "ka"
-            else:
-                if day == None or int(day) <= 3:
-                    channel_name = message.content[2:5].strip()
-                elif int(day) >= 4:
-                    nq = message.content[2:5].strip()
-                    hq_start = message.content.find("/") + 1
-                    hq_end = message.content.find("(")
-                    hq = message.content[hq_start:hq_end].strip()[:3]
-                    channel_name = f"{nq}{hq}"
+#             if any(keyword in message.content for keyword in ss.ignore_create_channels):
+#                 continue
+#             elif "King Arthro" in message.content:
+#                 channel_name = "ka"
+#             else:
+#                 if day == None or int(day) <= 3:
+#                     channel_name = message.content[2:5].strip()
+#                 elif int(day) >= 4:
+#                     nq = message.content[2:5].strip()
+#                     hq_start = message.content.find("/") + 1
+#                     hq_end = message.content.find("(")
+#                     hq = message.content[hq_start:hq_end].strip()[:3]
+#                     channel_name = f"{nq}{hq}"
 
-            # Extract UTC timestamp
-            utc_start = message.content.find("<t:")
-            utc_end = message.content.find(":T>")
-            if utc_start != -1 and utc_end != -1:
-                utc = int(message.content[utc_start + 3:utc_end])
-                dt = datetime.datetime.utcfromtimestamp(utc)
-                date = dt.strftime("%b%d").lower()
-                hnm = channel_name.upper()
-                hnm_name = message.content
+#             # Extract UTC timestamp
+#             utc_start = message.content.find("<t:")
+#             utc_end = message.content.find(":T>")
+#             if utc_start != -1 and utc_end != -1:
+#                 utc = int(message.content[utc_start + 3:utc_end])
+#                 dt = datetime.datetime.utcfromtimestamp(utc)
+#                 date = dt.strftime("%b%d").lower()
+#                 hnm = channel_name.upper()
+#                 hnm_name = message.content
 
-                # Time to move channels
-                hnm_time = datetime.datetime.fromtimestamp(utc + (ss.move_review * 3600))
+#                 # Time to move channels
+#                 hnm_time = datetime.datetime.fromtimestamp(utc + (ss.move_review * 3600))
 
-                # Move channels if 4 hours has passed the hnm camp time
-                if not hnm_time >= target_time:
-                    if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
-                        channel_name = f"{date}-{hnm}{day}".lower()
-                    else:
-                        channel_name = f"{date}-{hnm}".lower()
-                    existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                    if existing_channel:
-                        await existing_channel.edit(category=dkp_review_category)
+#                 # Move channels if 4 hours has passed the hnm camp time
+#                 if not hnm_time >= target_time:
+#                     if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
+#                         channel_name = f"{date}-{hnm}{day}".lower()
+#                     else:
+#                         channel_name = f"{date}-{hnm}".lower()
+#                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
+#                     if existing_channel:
+                        # await existing_channel.edit(category=dkp_review_category)
 
 @tasks.loop(hours=24)  # Task runs every 24 hours
 async def delete_old_channels():
-    archive_category = discord.utils.get(bot.guilds[0].categories, name="ATTENDANCE ARCHIVE")  # Assuming the bot is in only one guild
+    archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)  # Assuming the bot is in only one guild
     if archive_category:
         for channel in archive_category.channels:
             if isinstance(channel, discord.TextChannel):
@@ -186,7 +188,7 @@ async def delete_old_channels():
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
-    move_for_review.start()
+    # move_for_review.start()
     delete_old_channels.start()
 
 @bot.event
@@ -440,7 +442,7 @@ async def archive(ctx, option=None):
     # Check if the category is "DKP REVIEW"
     category = ctx.channel.category
 
-    if not category or category.name != "DKP REVIEW":
+    if not category or category.name != dkp_review_category_name:
         await ctx.send("The command can only be used in the 'DKP REVIEW' category.")
         return
 
@@ -488,7 +490,7 @@ async def archive(ctx, option=None):
             df.to_csv(file_name, index=False)
 
             # Move the channel to the "Archive" category
-            archive_category = discord.utils.get(ctx.guild.categories, name="ATTENDANCE ARCHIVE")
+            archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
             if archive_category:
                 await channel.edit(category=archive_category)
                 await ctx.send(f"Channel '{channel.name}' has been archived.")
@@ -529,7 +531,7 @@ async def archive(ctx, option=None):
         df.to_csv(file_name, index=False)
 
         # Move the channel to the "Archive" category
-        archive_category = discord.utils.get(ctx.guild.categories, name="ATTENDANCE ARCHIVE")
+        archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
         if archive_category:
             await channel.edit(category=archive_category)
             await ctx.send(f"Channel '{channel.name}' has been archived.")
@@ -567,8 +569,11 @@ async def warn_ten(channel_name):
 
     # Get the category by name
     guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
-    category_name = "HNM ATTENDANCE"
+    category_name = hnm_att_category_name
     category = discord.utils.get(guild.categories, name=category_name)
+
+    # Adding a 30 sec sleep to the task to deal with any potential latency issues.
+    await time.sleep(30)
 
     if not category:
         return
@@ -606,12 +611,18 @@ async def window_manager(channel_name):
 #       - Repeat until it spawns
 ########################################################################################
     now = datetime.datetime.now()
-    target_time = now + datetime.timedelta(minutes=62)
+    # Accounts for channel being created 30 minutes prior to window and the 65 minutes
+    target_time = now + datetime.timedelta(minutes=95)
 
     # Get the category by name
-    guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
-    category_name = "HNM ATTENDANCE"
+    guild = bot.get_guild(guild_id)
+    category_name = hnm_att_category_name
     category = discord.utils.get(guild.categories, name=category_name)
+
+    dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
+
+    # Adding a 30 sec sleep to the task to deal with any potential latency issues.
+    await time.sleep(30)
 
     if not category:
         return
@@ -630,7 +641,7 @@ async def window_manager(channel_name):
 
                     # Calculate the delay until the target time
                     delay = dt - now
-                    # Send a "hi" message every 10 minutes until 62 minutes have passed
+
                     if delay.total_seconds() > 0:
                         await asyncio.sleep(delay.total_seconds())
                     w = 1
@@ -638,7 +649,12 @@ async def window_manager(channel_name):
                         async for message in channel.history(limit=None):
                             if message.content.lower() in ["kill", "pop", "claim", "ours"]:
                                 # Stop the window manager loop
-                                print("Loops Broken")
+                                await time.sleep(300)
+                                channel.send("Moving channel for dkp review in 5 minutes.")
+                                print('Sleeping!')
+                                await time.sleep(300)
+                                print('Moving channel for DKP Review!')
+                                await channel.edit(category=dkp_review_category)
                                 return await calculate_DKP(channel, channel_name, w - 1)
 
                         await channel.send(f"-------------- Window {w} is now --------------")
@@ -646,6 +662,12 @@ async def window_manager(channel_name):
                         await asyncio.sleep(10 * 60)  # 10 minutes delay
                         now = datetime.datetime.now()
                     # break
+                    await time.sleep(300)
+                    channel.send("Moving channel for dkp review in 5 minutes.")
+                    print('Sleeping!')
+                    await time.sleep(300)
+                    print('Moving channel for DKP Review!')
+                    await channel.edit(category=dkp_review_category)
                     return await calculate_DKP(channel, channel_name, w - 1)
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
@@ -732,14 +754,13 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     else:
         # Invalid timestamp format provided
         await ctx.author.send(f"Incorrect timestamp format for {original_hnm}.\nPlease resend the command in {bot_channel.mention}")
-        print("Invalid timestamp format")
 
 
     # parse_date = datetime.datetime.strptime(timestamp, date_format)
     # unix_timestamp = int(time.mktime(parse_date.timetuple()))
 
     try:
-        if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro"]:
+        if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro", "Simurgh"]:
             unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
         else:
             unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
