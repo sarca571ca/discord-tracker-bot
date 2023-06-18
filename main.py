@@ -108,72 +108,6 @@ async def create_channel_task():
                             asyncio.create_task(task_window_manager(channel_name))  # Starts a task to manage the window
 
 
-# @tasks.loop(minutes=5)
-# async def move_for_review():
-# #######################################################################################
-# # move_for_review______________________________________________________________________
-# # Moves the channel's for DKP Review 3-hours from spawn time
-# ########################################################################################
-#     target_channel_id = hnm_times  # Replace with your target channel ID
-#     dkp_review_category_name = "DKP REVIEW"  # Replace with the name of your DKP review category
-
-#     guild = bot.get_guild(guild_id)
-#     target_channel = bot.get_channel(target_channel_id)
-#     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
-
-#     now = int(time.time())
-#     target_time = datetime.datetime.fromtimestamp(now)
-
-#     async for message in target_channel.history(limit=None, oldest_first=True):
-#         if message.content.startswith("-"):
-#             channel_name = message.content[2:5].strip()
-
-#             # Extract the day
-#             day_start = message.content.find("(")
-#             day_end = message.content.find(")")
-#             if day_start != -1 and day_end != -1:
-#                 raw_day = message.content[day_start + 1:day_end].strip()
-#                 day = ref(raw_day)
-#             else:
-#                 day = None
-
-#             if any(keyword in message.content for keyword in ss.ignore_create_channels):
-#                 continue
-#             elif "King Arthro" in message.content:
-#                 channel_name = "ka"
-#             else:
-#                 if day == None or int(day) <= 3:
-#                     channel_name = message.content[2:5].strip()
-#                 elif int(day) >= 4:
-#                     nq = message.content[2:5].strip()
-#                     hq_start = message.content.find("/") + 1
-#                     hq_end = message.content.find("(")
-#                     hq = message.content[hq_start:hq_end].strip()[:3]
-#                     channel_name = f"{nq}{hq}"
-
-#             # Extract UTC timestamp
-#             utc_start = message.content.find("<t:")
-#             utc_end = message.content.find(":T>")
-#             if utc_start != -1 and utc_end != -1:
-#                 utc = int(message.content[utc_start + 3:utc_end])
-#                 dt = datetime.datetime.utcfromtimestamp(utc)
-#                 date = dt.strftime("%b%d").lower()
-#                 hnm = channel_name.upper()
-#                 hnm_name = message.content
-
-#                 # Time to move channels
-#                 hnm_time = datetime.datetime.fromtimestamp(utc + (ss.move_review * 3600))
-
-#                 # Move channels if 4 hours has passed the hnm camp time
-#                 if not hnm_time >= target_time:
-#                     if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
-#                         channel_name = f"{date}-{hnm}{day}".lower()
-#                     else:
-#                         channel_name = f"{date}-{hnm}".lower()
-#                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
-#                     if existing_channel:
-                        # await existing_channel.edit(category=dkp_review_category)
-
 @tasks.loop(hours=24)  # Task runs every 24 hours
 async def delete_old_channels():
     archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)  # Assuming the bot is in only one guild
@@ -202,10 +136,10 @@ async def on_message(message):
         else:
             await message.author.send(f"Please use the `!help` command in {bot_channel.mention}")
 
-    # else:
-    #     # Check if the message is sent in the 'bot-commands' channel
-    #     if message.channel.name == 'bot-commands':
-    #         await message.delete()
+    elif ss.clear_bot_commands == True:
+        # Check if the message is sent in the 'bot-commands' channel
+        if message.channel.name == 'bot-commands':
+            await message.delete()
 
     await bot.process_commands(message)
 
@@ -493,19 +427,16 @@ async def archive(ctx, option=None):
             archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
             if archive_category:
                 await channel.edit(category=archive_category)
-                await ctx.send(f"Channel '{channel.name}' has been archived.")
             else:
                 await ctx.send("The 'Archive' category does not exist.")
 
             # Append log message to the log file
-            log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
+            log_message = f"Channel '{channel.name}' has been archived at {datetime.datetime.now()}"
             with open(log_file, "a") as file:
                 file.write(log_message + "\n")
 
-        await ctx.send("All channels in the 'DKP REVIEW' category have been archived.")
-
         # Append log message to the log file
-        log_message = f"All channels in the 'DKP REVIEW' category have been archived at {datetime.now()}"
+        log_message = f"All channels in the 'DKP REVIEW' category have been archived at {datetime.datetime.now()}"
         with open(log_file, "a") as file:
             file.write(log_message + "\n")
 
@@ -539,7 +470,7 @@ async def archive(ctx, option=None):
             await ctx.send("The 'Archive' category does not exist.")
 
         # Append log message to the log file
-        log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
+        log_message = f"Channel '{channel.name}' has been archived at {datetime.datetime.now()}"
         with open(log_file, "a") as file:
             file.write(log_message + "\n")
 
@@ -573,7 +504,7 @@ async def warn_ten(channel_name):
     category = discord.utils.get(guild.categories, name=category_name)
 
     # Adding a 30 sec sleep to the task to deal with any potential latency issues.
-    await time.sleep(30)
+    await asyncio.sleep(30)
 
     if not category:
         return
@@ -622,7 +553,7 @@ async def window_manager(channel_name):
     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
 
     # Adding a 30 sec sleep to the task to deal with any potential latency issues.
-    await time.sleep(30)
+    await asyncio.sleep(30)
 
     if not category:
         return
@@ -649,11 +580,9 @@ async def window_manager(channel_name):
                         async for message in channel.history(limit=None):
                             if message.content.lower() in ["kill", "pop", "claim", "ours"]:
                                 # Stop the window manager loop
-                                await time.sleep(300)
-                                channel.send("Moving channel for dkp review in 5 minutes.")
-                                print('Sleeping!')
-                                await time.sleep(300)
-                                print('Moving channel for DKP Review!')
+                                await asyncio.sleep(300)
+                                await channel.send("Moving channel for dkp review in 5 minutes.")
+                                await asyncio.sleep(300)
                                 await channel.edit(category=dkp_review_category)
                                 return await calculate_DKP(channel, channel_name, w - 1)
 
@@ -662,18 +591,16 @@ async def window_manager(channel_name):
                         await asyncio.sleep(10 * 60)  # 10 minutes delay
                         now = datetime.datetime.now()
                     # break
-                    await time.sleep(300)
-                    channel.send("Moving channel for dkp review in 5 minutes.")
-                    print('Sleeping!')
-                    await time.sleep(300)
-                    print('Moving channel for DKP Review!')
+                    await asyncio.sleep(300)
+                    await channel.send("Moving channel for dkp review in 5 minutes.")
+                    await asyncio.sleep(300)
                     await channel.edit(category=dkp_review_category)
                     return await calculate_DKP(channel, channel_name, w - 1)
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
     print("Work in progress, maybe....we'll see.")
-    channel.send("~fin")
+    await channel.send("~fin")
     # messages = []
     # authors_without_number = set()
 
