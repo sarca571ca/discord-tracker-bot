@@ -20,13 +20,7 @@ dkp_review_category_name = "DKP REVIEW"
 hnm_att_category_name = "HNM ATTENDANCE"
 att_arch_category_name = "ATTENDANCE ARCHIVE"
 
-async def task_window_manager(channel_name):
-    await window_manager(channel_name)
-
-async def task_warn_ten(channel_name):
-    await warn_ten(channel_name)
-
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=5)
 async def create_channel_task():
 #######################################################################################
 # create_channel_task _________________________________________________________________
@@ -81,10 +75,13 @@ async def create_channel_task():
             utc_end = message.content.find(":T>")
             if utc_start != -1 and utc_end != -1:
                 utc = int(message.content[utc_start + 3:utc_end])
-                dt = datetime.datetime.utcfromtimestamp(utc)
+                dt = datetime.datetime.fromtimestamp(utc)
                 date = dt.strftime("%b%d").lower()
                 hnm = channel_name.upper()
                 hnm_name = message.content
+                unix_now = int(datetime.datetime.now().timestamp())
+                unix_target = int(dt.timestamp())
+                time_diff = unix_now - unix_target
 
                 # Subtract 10 minutes from the posted time and compare it to target_time
                 hnm_time = datetime.datetime.fromtimestamp(utc - (ss.make_channel * 60))
@@ -99,13 +96,27 @@ async def create_channel_task():
                             channel_name = f"{date}-{hnm}".lower()
 
                         existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                        if not existing_channel:
+                        if existing_channel:
+                            await asyncio.sleep(5)
+                            # Check if a window_manager task is already running for the channel
+                            for task in asyncio.all_tasks():
+                                if task.get_name() == f"wm-{channel_name}":
+                                    break
+                            else:
+                                # Channel already exists, check if it qualifies for window_manager
+                                if time_diff >= 0 and time_diff <= 3900:
+                                    wmtask = asyncio.create_task(window_manager(channel_name))
+                                    wmtask.set_name(f"wm-{channel_name}")
+                                    print("test")
+                        else:
                             channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
                             await channel.edit(position=hnm_times_channel.position + 1)
                             await channel.send(f"{hnm_name}")
-                            await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
-                            asyncio.create_task(task_warn_ten(channel_name)) # Starts a task to post in channel 10-minutes before window
-                            asyncio.create_task(task_window_manager(channel_name))  # Starts a task to manage the window
+                            # await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
+                            wttask = asyncio.create_task(warn_ten(channel_name))
+                            wttask.set_name(f"wt-{channel_name}")
+                            wmtask = asyncio.create_task(window_manager(channel_name))
+                            wmtask.set_name(f"wm-{channel_name}")
 
 
 @tasks.loop(hours=24)  # Task runs every 24 hours
@@ -435,10 +446,10 @@ async def archive(ctx, option=None):
             with open(log_file, "a") as file:
                 file.write(log_message + "\n")
 
-        # Append log message to the log file
-        log_message = f"All channels in the 'DKP REVIEW' category have been archived at {datetime.datetime.now()}"
-        with open(log_file, "a") as file:
-            file.write(log_message + "\n")
+        # # Append log message to the log file
+        # log_message = f"All channels in the 'DKP REVIEW' category have been archived at {datetime.datetime.now()}"
+        # with open(log_file, "a") as file:
+        #     file.write(log_message + "\n")
 
     else:
         # Get the current channel
@@ -465,7 +476,6 @@ async def archive(ctx, option=None):
         archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
         if archive_category:
             await channel.edit(category=archive_category)
-            await ctx.send(f"Channel '{channel.name}' has been archived.")
         else:
             await ctx.send("The 'Archive' category does not exist.")
 
@@ -504,7 +514,7 @@ async def warn_ten(channel_name):
     category = discord.utils.get(guild.categories, name=category_name)
 
     # Adding a 30 sec sleep to the task to deal with any potential latency issues.
-    await asyncio.sleep(30)
+    await asyncio.sleep(1)
 
     if not category:
         return
@@ -553,7 +563,7 @@ async def window_manager(channel_name):
     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
 
     # Adding a 30 sec sleep to the task to deal with any potential latency issues.
-    await asyncio.sleep(30)
+    await asyncio.sleep(1)
 
     if not category:
         return
@@ -567,39 +577,43 @@ async def window_manager(channel_name):
                 utc_start = message.content.find("<t:")
                 utc_end = message.content.find(":T>")
                 if utc_start != -1 and utc_end != -1:
-                    utc = message.content[utc_start + 3:utc_end]
-                    dt = datetime.datetime.fromtimestamp(int(utc))
+                    utc = int(message.content[utc_start + 3:utc_end])
+                    dt = datetime.datetime.fromtimestamp(utc)
+                    unix_now = int(datetime.datetime.now().timestamp())
+                    unix_target = int(dt.timestamp())
 
-                    # Calculate the delay until the target time
-                    delay = dt - now
+                    time_diff = unix_now - unix_target
+                    sleep_time = unix_target - unix_now
+                    if time_diff <= -0:
+                        await asyncio.sleep(sleep_time)
+                        time_diff = int(datetime.datetime.now().timestamp()) - unix_target
 
-                    if delay.total_seconds() > 0:
-                        await asyncio.sleep(delay.total_seconds())
-                    w = 1
-                    while now < target_time and w <= 7:
-                        async for message in channel.history(limit=None):
-                            if message.content.lower() in ["kill", "pop", "claim", "ours"]:
-                                # Stop the window manager loop
-                                await asyncio.sleep(300)
-                                await channel.send("Moving channel for dkp review in 5 minutes.")
-                                await asyncio.sleep(300)
-                                await channel.edit(category=dkp_review_category)
-                                return await calculate_DKP(channel, channel_name, w - 1)
+                    while time_diff >= 0 and time_diff <= 3600:
+                        if time_diff % 600 == 0:
+                            window = round(time_diff / 600) + 1
+                            async for message in channel.history(limit=None):
+                                if message.content.lower() in ["kill", "pop", "claim", "ours"]:
+                                    # Stop the window manager loop
+                                    await asyncio.sleep(300)
+                                    await channel.send("Moving channel for dkp review in 5 minutes.")
+                                    await asyncio.sleep(300)
+                                    await channel.edit(category=dkp_review_category)
+                                    return await calculate_DKP(channel, channel_name, window)
+                            await channel.send(f"-------------- Window {window} is now --------------")
+                            await asyncio.sleep(5)
+                        await asyncio.sleep(1)
+                        time_diff = int(datetime.datetime.now().timestamp()) - unix_target
 
-                        await channel.send(f"-------------- Window {w} is now --------------")
-                        w += 1
-                        await asyncio.sleep(10 * 60)  # 10 minutes delay
-                        now = datetime.datetime.now()
-                    # break
                     await asyncio.sleep(300)
+
                     await channel.send("Moving channel for dkp review in 5 minutes.")
                     await asyncio.sleep(300)
+
                     await channel.edit(category=dkp_review_category)
-                    return await calculate_DKP(channel, channel_name, w - 1)
+                    return await calculate_DKP(channel, channel_name, window - 1)
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
-    print("Work in progress, maybe....we'll see.")
     await channel.send("~fin")
     # messages = []
     # authors_without_number = set()
