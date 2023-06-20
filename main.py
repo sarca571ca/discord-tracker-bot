@@ -107,12 +107,11 @@ async def create_channel_task():
                                 if time_diff >= 0 and time_diff <= 3900:
                                     wmtask = asyncio.create_task(window_manager(channel_name))
                                     wmtask.set_name(f"wm-{channel_name}")
-                                    print("test")
                         else:
                             channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
                             await channel.edit(position=hnm_times_channel.position + 1)
                             await channel.send(f"{hnm_name}")
-                            # await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
+                            await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
                             wttask = asyncio.create_task(warn_ten(channel_name))
                             wttask.set_name(f"wt-{channel_name}")
                             wmtask = asyncio.create_task(window_manager(channel_name))
@@ -379,6 +378,31 @@ async def Tiamat(
 Tiamat.brief = f"Used to set the ToD of Tiamat."
 Tiamat.usage = "<day> <timestamp>"
 
+@bot.command(aliases=["jor", "jorm", "jormungand"])
+async def Jormungand(
+    ctx,
+    day: str = commands.parameter(
+        default="Day",
+        description="Used for HQ system, can be set to 0 for mobs that do not HQ"
+    ),
+    *,
+    timestamp: str = commands.parameter(
+        default="Timestamp",
+        description="ToD of the mob in your TZ"
+    )
+):
+    allowed_channel_id = bot_commands
+    author = ctx.author
+
+    if ctx.channel.id != allowed_channel_id:
+        await author.send("This command can only be used in the specified channel.")
+        await ctx.message.delete()
+        return
+
+    await handle_hnm_command(ctx, "Jormungand", None, day, timestamp)
+Tiamat.brief = f"Used to set the ToD of Jormungand."
+Tiamat.usage = "<day> <timestamp>"
+
 # Archive command used for moving channels from DKP Review Category
 @bot.command()
 async def archive(ctx, option=None):
@@ -591,14 +615,15 @@ async def window_manager(channel_name):
                     while time_diff >= 0 and time_diff <= 3600:
                         if time_diff % 600 == 0:
                             window = round(time_diff / 600) + 1
-                            async for message in channel.history(limit=None):
-                                if message.content.lower() in ["kill", "pop", "claim", "ours"]:
-                                    # Stop the window manager loop
-                                    await asyncio.sleep(300)
-                                    await channel.send("Moving channel for dkp review in 5 minutes.")
-                                    await asyncio.sleep(300)
-                                    await channel.edit(category=dkp_review_category)
-                                    return await calculate_DKP(channel, channel_name, window)
+                            if ss.wm_close_trigger is True:
+                                async for message in channel.history(limit=None):
+                                    if message.content.lower() in ["kill", "pop", "claim", "ours"]:
+                                        # Stop the window manager loop
+                                        await asyncio.sleep(300)
+                                        await channel.send("Moving channel for dkp review in 5 minutes.")
+                                        await asyncio.sleep(300)
+                                        await channel.edit(category=dkp_review_category)
+                                        return await calculate_DKP(channel, channel_name, window)
                             await channel.send(f"-------------- Window {window} is now --------------")
                             await asyncio.sleep(5)
                         await asyncio.sleep(1)
@@ -614,7 +639,7 @@ async def window_manager(channel_name):
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
-    await channel.send("~fin")
+    await channel.send(".........!DKPEport.........")
     # messages = []
     # authors_without_number = set()
 
@@ -639,7 +664,8 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
 
     if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
         hnm = "GroundKings"
-
+    if hnm in ["Jormungand", "Tiamat", "Vrtra"]:
+        hnm = "GrandWyrm"
 
     day = int(day) + 1
 
@@ -652,8 +678,23 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     if timestamp == None:
         await ctx.author.send(f"No date/time provided for {original_hnm}.\nPlease resend the command in {bot_channel.metion}")
     # List of accepted date formats
-    date_formats = ["%Y-%m-%d %H%M%S", "%Y%m%d %H%M%S", "%y%m%d %H%M%S", "%m%d%Y %H%M%S", "%m%d%Y %H%M%S"]
-    time_formats = ["%H%M%S", "%H:%M:%S", "%h:%M:%S"]
+    date_formats = [
+        # "%Y-%m-%d %I%M%S %p %z", "%Y%m%d %I%M%S %p %z", "%y%m%d %I%M%S %p %z", "%m%d%Y %I%M%S %p %z", "%m%d%Y %I%M%S %p %z",
+        # "%Y-%m-%d %I:%M:%S %p %z", "%Y%m%d %I:%M:%S %p %z", "%y%m%d %I:%M:%S %p %z", "%m%d%Y %I:%M:%S %p %z", "%m%d%Y %I:%M:%S %p %z",
+        # "%Y-%m-%d %H:%M:%S %z", "%Y%m%d %H:%M:%S %z", "%y%m%d %H:%M:%S %z", "%m%d%Y %H:%M:%S %z", "%m%d%Y %H:%M:%S %z",
+        # "%Y-%m-%d %h:%M:%S %z", "%Y%m%d %h:%M:%S %z", "%y%m%d %h:%M:%S %z", "%m%d%Y %h:%M:%S %z", "%m%d%Y %h:%M:%S %z",
+        "%Y-%m-%d %I%M%S %p", "%Y%m%d %I%M%S %p", "%y%m%d %I%M%S %p", "%m%d%Y %I%M%S %p", "%m%d%Y %I%M%S %p",
+        "%Y-%m-%d %I:%M:%S %p", "%Y%m%d %I:%M:%S %p", "%y%m%d %I:%M:%S %p", "%m%d%Y %I:%M:%S %p", "%m%d%Y %I:%M:%S %p",
+        "%Y-%m-%d %H%M%S", "%Y%m%d %H%M%S", "%y%m%d %H%M%S", "%m%d%Y %H%M%S", "%m%d%Y %H%M%S",
+        "%Y-%m-%d %H:%M:%S", "%Y%m%d %H:%M:%S", "%y%m%d %H:%M:%S", "%m%d%Y %H:%M:%S", "%m%d%Y %H:%M:%S",
+        "%Y-%m-%d %h%M%S", "%Y%m%d %h%M%S", "%y%m%d %h%M%S", "%m%d%Y %h%M%S", "%m%d%Y %h%M%S",
+        "%Y-%m-%d %h:%M:%S", "%Y%m%d %h:%M:%S", "%y%m%d %h:%M:%S", "%m%d%Y %h:%M:%S", "%m%d%Y %h:%M:%S"
+    ]
+    time_formats = [
+        "%I%M%S %p", "%I:%M:%S %p", "%H%M%S", "%H:%M:%S", "%h:%M:%S"
+        # "%I%M%S %p %z", "%I:%M:%S %p %z", "%H%M%S %z", "%H:%M:%S %z", "%h:%M:%S %z"
+    ]
+
     # Current date
     current_date = datetime.date.today()
 
@@ -688,7 +729,8 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
             current_date -= datetime.timedelta(days=1)
 
         # Combine the current date (or previous day) with the parsed time
-        parsed_datetime = datetime.datetime.combine(current_date, parsed_datetime.time())
+        if "GrandWyrm" not in hnm:
+            parsed_datetime = datetime.datetime.combine(current_date, parsed_datetime.time())
 
         # Convert the parsed datetime to a Unix timestamp
         unix_timestamp = int(parsed_datetime.timestamp())
@@ -696,13 +738,11 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
         # Invalid timestamp format provided
         await ctx.author.send(f"Incorrect timestamp format for {original_hnm}.\nPlease resend the command in {bot_channel.mention}")
 
-
-    # parse_date = datetime.datetime.strptime(timestamp, date_format)
-    # unix_timestamp = int(time.mktime(parse_date.timetuple()))
-
     try:
         if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro", "Simurgh"]:
             unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
+        elif original_hnm in ["Jormungand", "Tiamat", "Vrtra"]:
+            unix_timestamp += (84 * 3600)  # Add 84 hours for GrandWyvrms and KA
         else:
             unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
     except (ValueError, OverflowError):
