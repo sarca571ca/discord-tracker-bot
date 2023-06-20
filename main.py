@@ -623,7 +623,7 @@ async def window_manager(channel_name):
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
-    await channel.send(".........!DKPEport.........")
+    await channel.send(".........!DKPExport.........")
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
