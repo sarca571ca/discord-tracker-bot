@@ -26,9 +26,7 @@ async def create_channel_task():
 # create_channel_task _________________________________________________________________
 # Task currently creates a channel 30 minutes prior to window and notifies everyone.
 # ToDo:
-#   - Grand Wyrvn management still needs to be implemented
 #   - Grand Wyrvn's will be managed by guild memembers
-#   - Need to set a priority system based on LS rules or
 ########################################################################################
 
     hnm_times_channel_id = hnm_times
@@ -118,21 +116,20 @@ async def create_channel_task():
                             wmtask.set_name(f"wm-{channel_name}")
 
 
-@tasks.loop(hours=24)  # Task runs every 24 hours
+@tasks.loop(hours=24)
 async def delete_old_channels():
-    archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)  # Assuming the bot is in only one guild
+    archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)
     if archive_category:
         for channel in archive_category.channels:
             if isinstance(channel, discord.TextChannel):
-                now = datetime.datetime.now(datetime.timezone.utc)  # Make datetime.now() offset-aware
-                if (now - channel.created_at).days >= ss.archive_wait:  # Check if the channel is older than ss.archive_wait
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if (now - channel.created_at).days >= ss.archive_wait:
                     await channel.delete()
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
-    # move_for_review.start()
     delete_old_channels.start()
 
 @bot.event
@@ -400,15 +397,13 @@ async def Jormungand(
         return
 
     await handle_hnm_command(ctx, "Jormungand", None, day, timestamp)
-Tiamat.brief = f"Used to set the ToD of Jormungand."
-Tiamat.usage = "<day> <timestamp>"
+Jormungand.brief = f"Used to set the ToD of Jormungand."
+Jormungand.usage = "<day> <timestamp>"
 
 # Archive command used for moving channels from DKP Review Category
 @bot.command()
 async def archive(ctx, option=None):
-    target_channel_ids = [bot_commands, hnm_times]  # Replace with the actual channel IDs
-
-    # Check if the category is "DKP REVIEW"
+# Check if the category is "DKP REVIEW"
     category = ctx.channel.category
 
     if not category or category.name != dkp_review_category_name:
@@ -470,11 +465,6 @@ async def archive(ctx, option=None):
             with open(log_file, "a") as file:
                 file.write(log_message + "\n")
 
-        # # Append log message to the log file
-        # log_message = f"All channels in the 'DKP REVIEW' category have been archived at {datetime.datetime.now()}"
-        # with open(log_file, "a") as file:
-        #     file.write(log_message + "\n")
-
     else:
         # Get the current channel
         channel = ctx.channel
@@ -508,8 +498,6 @@ async def archive(ctx, option=None):
         with open(log_file, "a") as file:
             file.write(log_message + "\n")
 
-
-
 # Command used to sort the hnm-times
 @bot.command()
 async def sort(ctx):
@@ -529,15 +517,16 @@ async def sort(ctx):
         await message.delete()
         await channel.send(content)
 
+# Send the 10-Minute warning to the channel
 async def warn_ten(channel_name):
     now = datetime.datetime.now()
 
     # Get the category by name
-    guild = bot.get_guild(guild_id)  # Replace with the actual guild ID
+    guild = bot.get_guild(guild_id)
     category_name = hnm_att_category_name
     category = discord.utils.get(guild.categories, name=category_name)
 
-    # Adding a 30 sec sleep to the task to deal with any potential latency issues.
+    # Adding a sleep to the task to deal with any potential latency issues.
     await asyncio.sleep(1)
 
     if not category:
@@ -571,13 +560,8 @@ async def window_manager(channel_name):
 # window_manager_______________________________________________________________________
 # Manages the windows within the channels
 # ToDo:
-#   - Grand Wyvrn
-#       - Open windows 10-minutes prior to spawn and close them 1-minute after spawn
-#       - Repeat until it spawns
 ########################################################################################
     now = datetime.datetime.now()
-    # Accounts for channel being created 30 minutes prior to window and the 65 minutes
-    target_time = now + datetime.timedelta(minutes=95)
 
     # Get the category by name
     guild = bot.get_guild(guild_id)
@@ -586,7 +570,7 @@ async def window_manager(channel_name):
 
     dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
 
-    # Adding a 30 sec sleep to the task to deal with any potential latency issues.
+    # Adding a sleep to the task to deal with any potential latency issues.
     await asyncio.sleep(1)
 
     if not category:
@@ -624,7 +608,7 @@ async def window_manager(channel_name):
                                         await asyncio.sleep(300)
                                         await channel.edit(category=dkp_review_category)
                                         return await calculate_DKP(channel, channel_name, window)
-                            await channel.send(f"-------------- Window {window} is now --------------")
+                            await channel.send(f"--------------- Window {window} is now ---------------")
                             await asyncio.sleep(5)
                         await asyncio.sleep(1)
                         time_diff = int(datetime.datetime.now().timestamp()) - unix_target
@@ -640,24 +624,6 @@ async def window_manager(channel_name):
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
     await channel.send(".........!DKPEport.........")
-    # messages = []
-    # authors_without_number = set()
-
-    # async for message in channel.history(limit=None, oldest_first=True):
-    #     if message.author.name != 'wd-tod':
-    #         if 'o' in message.content and not any(char.isdigit() for char in message.content):
-    #             messages.append((message.author.display_name, message.content))
-    #             authors_without_number.add(message.author.display_name)
-
-    # df = pd.DataFrame(messages, columns=['author', 'message'])
-
-    # # Sort the DataFrame by 'author' and 'message'
-    # df_sorted = df.sort_values(['author', 'message'])
-
-    # print(df_sorted)
-    # print("Authors without a number following 'o':")
-    # for author in authors_without_number:
-    #     print(author)
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
@@ -679,10 +645,6 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
         await ctx.author.send(f"No date/time provided for {original_hnm}.\nPlease resend the command in {bot_channel.metion}")
     # List of accepted date formats
     date_formats = [
-        # "%Y-%m-%d %I%M%S %p %z", "%Y%m%d %I%M%S %p %z", "%y%m%d %I%M%S %p %z", "%m%d%Y %I%M%S %p %z", "%m%d%Y %I%M%S %p %z",
-        # "%Y-%m-%d %I:%M:%S %p %z", "%Y%m%d %I:%M:%S %p %z", "%y%m%d %I:%M:%S %p %z", "%m%d%Y %I:%M:%S %p %z", "%m%d%Y %I:%M:%S %p %z",
-        # "%Y-%m-%d %H:%M:%S %z", "%Y%m%d %H:%M:%S %z", "%y%m%d %H:%M:%S %z", "%m%d%Y %H:%M:%S %z", "%m%d%Y %H:%M:%S %z",
-        # "%Y-%m-%d %h:%M:%S %z", "%Y%m%d %h:%M:%S %z", "%y%m%d %h:%M:%S %z", "%m%d%Y %h:%M:%S %z", "%m%d%Y %h:%M:%S %z",
         "%Y-%m-%d %I%M%S %p", "%Y%m%d %I%M%S %p", "%y%m%d %I%M%S %p", "%m%d%Y %I%M%S %p", "%m%d%Y %I%M%S %p",
         "%Y-%m-%d %I:%M:%S %p", "%Y%m%d %I:%M:%S %p", "%y%m%d %I:%M:%S %p", "%m%d%Y %I:%M:%S %p", "%m%d%Y %I:%M:%S %p",
         "%Y-%m-%d %H%M%S", "%Y%m%d %H%M%S", "%y%m%d %H%M%S", "%m%d%Y %H%M%S", "%m%d%Y %H%M%S",
@@ -692,7 +654,6 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     ]
     time_formats = [
         "%I%M%S %p", "%I:%M:%S %p", "%H%M%S", "%H:%M:%S", "%h:%M:%S"
-        # "%I%M%S %p %z", "%I:%M:%S %p %z", "%H%M%S %z", "%H:%M:%S %z", "%h:%M:%S %z"
     ]
 
     # Current date
@@ -727,26 +688,21 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
         if parsed_datetime > datetime.datetime.now():
             # Subtract one day from the current date
             current_date -= datetime.timedelta(days=1)
-
-        # Combine the current date (or previous day) with the parsed time
         if "GrandWyrm" not in hnm:
             parsed_datetime = datetime.datetime.combine(current_date, parsed_datetime.time())
 
-        # Convert the parsed datetime to a Unix timestamp
         unix_timestamp = int(parsed_datetime.timestamp())
     else:
-        # Invalid timestamp format provided
         await ctx.author.send(f"Incorrect timestamp format for {original_hnm}.\nPlease resend the command in {bot_channel.mention}")
 
     try:
         if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro", "Simurgh"]:
             unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
         elif original_hnm in ["Jormungand", "Tiamat", "Vrtra"]:
-            unix_timestamp += (84 * 3600)  # Add 84 hours for GrandWyvrms and KA
+            unix_timestamp += (84 * 3600)  # Add 84 hours for GrandWyrms and KA
         else:
             unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
     except (ValueError, OverflowError):
-        await ctx.author.send("Invalid date or time format provided.\nAccepted Formats:\nyyyy-mm-dd/yyyymmdd/yymmdd\nhh:mm:ss/hhmmss\nAny combination of the 2.")
         return
 
     async for message in channel.history(limit=None):
