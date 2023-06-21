@@ -713,9 +713,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
         if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"]:
             await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         else:
-            if int(day) == 8: # Force HQ pop on day 8
-                await channel.send(f"- {hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
-            elif int(day) >= 4: # Possible HQ or NQ day 4-7
+            if int(day) >= 4: # Possible HQ or NQ day 4+
                 await channel.send(f"- {original_hnm}/{hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else: # NQ only
                 await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
