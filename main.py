@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands, tasks
 import time
-import datetime
+from datetime import datetime, timedelta, date, timezone
 import re
 import ss             # Server specific variables see the ss.py and insert your values
 import os
 import pandas as pd
 import asyncio
+import pytz
 
 intents = discord.Intents.all()
 
@@ -19,6 +20,7 @@ bot_id = ss.bot_token                       # Replace with Bot Token
 dkp_review_category_name = "DKP REVIEW"
 hnm_att_category_name = "HNM ATTENDANCE"
 att_arch_category_name = "ATTENDANCE ARCHIVE"
+time_zone = pytz.timezone('America/Los_Angeles')
 
 @tasks.loop(seconds=5)
 async def create_channel_task():
@@ -39,7 +41,7 @@ async def create_channel_task():
         category = await guild.create_category(hnm_att_category_name)
 
     now = int(time.time())
-    target_time = datetime.datetime.fromtimestamp(now)
+    target_time = datetime.fromtimestamp(now)
 
     # Read messages from the target channels
     async for message in hnm_times_channel.history(limit=None, oldest_first=True):
@@ -73,17 +75,17 @@ async def create_channel_task():
             utc_end = message.content.find(":T>")
             if utc_start != -1 and utc_end != -1:
                 utc = int(message.content[utc_start + 3:utc_end])
-                dt = datetime.datetime.fromtimestamp(utc)
+                dt = datetime.fromtimestamp(utc)
                 date = dt.strftime("%b%d").lower()
                 hnm = channel_name.upper()
                 hnm_name = message.content
-                unix_now = int(datetime.datetime.now().timestamp())
+                unix_now = int(datetime.now().timestamp())
                 unix_target = int(dt.timestamp())
                 time_diff = unix_now - unix_target
 
                 # Subtract 10 minutes from the posted time and compare it to target_time
-                hnm_time = datetime.datetime.fromtimestamp(utc - (ss.make_channel * 60))
-                hnm_window_end = datetime.datetime.fromtimestamp(utc + (1 * 3600))
+                hnm_time = datetime.fromtimestamp(utc - (ss.make_channel * 60))
+                hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
 
                 # Create the channel inside the category with the calculated time
                 if hnm_window_end >= target_time:
@@ -122,7 +124,7 @@ async def delete_old_channels():
     if archive_category:
         for channel in archive_category.channels:
             if isinstance(channel, discord.TextChannel):
-                now = datetime.datetime.now(datetime.timezone.utc)
+                now = datetime.now(timezone.utc)
                 if (now - channel.created_at).days >= ss.archive_wait:
                     await channel.delete()
 
@@ -461,7 +463,7 @@ async def archive(ctx, option=None):
                 await ctx.send("The 'Archive' category does not exist.")
 
             # Append log message to the log file
-            log_message = f"Channel '{channel.name}' has been archived at {datetime.datetime.now()}"
+            log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
             with open(log_file, "a") as file:
                 file.write(log_message + "\n")
 
@@ -494,7 +496,7 @@ async def archive(ctx, option=None):
             await ctx.send("The 'Archive' category does not exist.")
 
         # Append log message to the log file
-        log_message = f"Channel '{channel.name}' has been archived at {datetime.datetime.now()}"
+        log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
         with open(log_file, "a") as file:
             file.write(log_message + "\n")
 
@@ -519,7 +521,7 @@ async def sort(ctx):
 
 # Send the 10-Minute warning to the channel
 async def warn_ten(channel_name):
-    now = datetime.datetime.now()
+    now = datetime.now()
 
     # Get the category by name
     guild = bot.get_guild(guild_id)
@@ -542,7 +544,7 @@ async def warn_ten(channel_name):
                 utc_end = message.content.find(":T>")
                 if utc_start != -1 and utc_end != -1:
                     utc = message.content[utc_start + 3:utc_end]
-                    dt = datetime.datetime.fromtimestamp(int(utc) - (10 * 60))
+                    dt = datetime.fromtimestamp(int(utc) - (10 * 60))
 
                     # Determine the delay needed before window opens
                     delay = dt - now
@@ -561,7 +563,7 @@ async def window_manager(channel_name):
 # Manages the windows within the channels
 # ToDo:
 ########################################################################################
-    now = datetime.datetime.now()
+    now = datetime.now()
 
     # Get the category by name
     guild = bot.get_guild(guild_id)
@@ -586,15 +588,15 @@ async def window_manager(channel_name):
                 utc_end = message.content.find(":T>")
                 if utc_start != -1 and utc_end != -1:
                     utc = int(message.content[utc_start + 3:utc_end])
-                    dt = datetime.datetime.fromtimestamp(utc)
-                    unix_now = int(datetime.datetime.now().timestamp())
+                    dt = datetime.fromtimestamp(utc)
+                    unix_now = int(datetime.now().timestamp())
                     unix_target = int(dt.timestamp())
 
                     time_diff = unix_now - unix_target
                     sleep_time = unix_target - unix_now
                     if time_diff <= -0:
                         await asyncio.sleep(sleep_time)
-                        time_diff = int(datetime.datetime.now().timestamp()) - unix_target
+                        time_diff = int(datetime.now().timestamp()) - unix_target
 
                     while time_diff >= 0 and time_diff <= 3600:
                         if time_diff % 600 == 0:
@@ -611,7 +613,7 @@ async def window_manager(channel_name):
                             await channel.send(f"--------------- Window {window} is now ---------------")
                             await asyncio.sleep(5)
                         await asyncio.sleep(1)
-                        time_diff = int(datetime.datetime.now().timestamp()) - unix_target
+                        time_diff = int(datetime.now().timestamp()) - unix_target
 
                     await asyncio.sleep(300)
 
@@ -657,7 +659,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     ]
 
     # Current date
-    current_date = datetime.date.today()
+    current_date = date.today()
 
     # Check if the provided timestamp matches any of the accepted formats
     valid_format = False
@@ -665,7 +667,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     for date_format in date_formats:
         try:
             # Try parsing the timestamp with the current format
-            parsed_datetime = datetime.datetime.strptime(timestamp, date_format)
+            parsed_datetime = time_zone.localize(datetime.strptime(timestamp, date_format))
             valid_format = True
             break
         except ValueError:
@@ -676,8 +678,8 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
         for time_format in time_formats:
             try:
                 # Try parsing the timestamp with the current format
-                parsed_time = datetime.datetime.strptime(timestamp, time_format).time()
-                parsed_datetime = datetime.datetime.combine(current_date, parsed_time)
+                parsed_time = datetime.strptime(timestamp, time_format).time()
+                parsed_datetime = time_zone.localize(datetime.combine(current_date, parsed_time))
                 valid_format = True
                 break
             except ValueError:
@@ -685,15 +687,18 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
 
     if valid_format:
         # Check if the parsed datetime is in the future
-        if parsed_datetime > datetime.datetime.now():
+        if parsed_datetime > datetime.now(time_zone):
             # Subtract one day from the current date
-            current_date -= datetime.timedelta(days=1)
+            current_date -= timedelta(days=1)
         if "GrandWyrm" not in hnm:
-            parsed_datetime = datetime.datetime.combine(current_date, parsed_datetime.time())
+            parsed_datetime = time_zone.localize(datetime.combine(current_date, parsed_datetime.time()))
 
         unix_timestamp = int(parsed_datetime.timestamp())
     else:
         await ctx.author.send(f"Incorrect timestamp format for {original_hnm}.\nPlease resend the command in {bot_channel.mention}")
+
+    # la_time = time_zone.localize(parsed_datetime)
+    # unix_timestamp = int(la_time.timestamp())
 
     try:
         if original_hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro", "Simurgh"]:
