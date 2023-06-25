@@ -603,15 +603,23 @@ async def window_manager(channel_name):
                             window = round(time_diff / 600) + 1
                             if ss.wm_close_trigger is True:
                                 async for message in channel.history(limit=None):
-                                    if message.content.lower() in ["kill", "pop", "claim", "ours"]:
+                                    if message.content.lower() in ["!kill", "!pop", "!claim", "!ours"]:
                                         # Stop the window manager loop
                                         await asyncio.sleep(300)
                                         await channel.send("Moving channel for dkp review in 5 minutes.")
                                         await asyncio.sleep(300)
                                         await channel.edit(category=dkp_review_category)
                                         return await calculate_DKP(channel, channel_name, window)
-                            await channel.send(f"--------------- Window {window} is now ---------------")
-                            await asyncio.sleep(5)
+                            if "shi" in channel.name:
+                                await channel.send(f"------------ Shikigami Weapon has spawned ------------")
+                                await asyncio.sleep(300)
+                                await channel.send("Moving channel for dkp review in 5 minutes.")
+                                await asyncio.sleep(300)
+                                await channel.edit(category=dkp_review_category)
+                                return await calculate_DKP(channel, channel_name, window - 1)
+                            else:
+                                await channel.send(f"--------------- Window {window} is now ---------------")
+                                await asyncio.sleep(5)
                         await asyncio.sleep(1)
                         time_diff = int(datetime.now().timestamp()) - unix_target
 
@@ -625,7 +633,7 @@ async def window_manager(channel_name):
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
-    await channel.send(".........!DKPExport.........")
+    await channel.send("!DKPExport")
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     original_hnm = hnm  # Store the original HNM name
