@@ -4,12 +4,12 @@ guild = 1234                                                                    
 hnm_times = 1234                                                                            # Channel ID where the camp times are posted
 bot_commands = 1234                                                                         # Designated bot-commands channel for setting ToD's
 clear_bot_commands = False                                                                  # True or False determines whether bot-commands issued in the bot-commnads channel are deleted
-wm_close_trigger = False                                                                    # True or False determines whether the use of pop, claim, kill, and ours in channel closes the window
+wm_close_trigger = True                                                                    # True or False determines whether the use of pop, claim, kill, and ours in channel closes the window
 make_channel = 30                                                                           # Makes a channel 30-Minutes before window
 move_review = 3                                                                             # Moves the channel for DKP Review after the time. Time is minutes.
 archive_channel = 4                                                                         # Archive the channel as a csv on the bot server after 4 hours after review or when command !archive is issued.
 archive_wait = 5                                                                            # The amount aof days a channel can sit in the archive channel. This counts from when the channel was created.
-ignore_channels = ['kv', 'shi', 'tia', 'vrt']                                               # Used the prevent the sending of window messages to certain channels
+ignore_channels = ['kv', 'tia', 'vrt', 'jorm']                                               # Used the prevent the sending of window messages to certain channels
 ignore_create_channels = ['King Vinegarroon', 'Tiamat', 'Vrtra', 'Jormungand']                            # Used to prevent the creation of certain channels eg. KV because its random
 
 # This message will display when channel opens windows for x-ins 10 minutes prior
