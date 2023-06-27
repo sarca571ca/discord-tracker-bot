@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 import time
 from datetime import datetime, timedelta, date, timezone
 import re
-import ss             # Server specific variables see the ss.py and insert your values
+import serversettings as ss             # Server specific variables see the ss.py and insert your values
 import os
 import pandas as pd
 import asyncio
@@ -133,6 +133,33 @@ async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
     delete_old_channels.start()
+
+@bot.command()
+async def signup(ctx):
+    options = ['Option 1', 'Option 2', 'Option 3']
+    message = await ctx.send(f"React with the corresponding emoji to choose an option:\n\n"
+                             f":one: {options[0]}\n"
+                             f":two: {options[1]}\n"
+                             f":three: {options[2]}")
+
+    emojis = ['1️⃣', '2️⃣', '3️⃣']
+    for emoji in emojis:
+        await message.add_reaction(emoji)
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user == bot.user:
+        return
+
+    options = ['Option 1', 'Option 2', 'Option 3']
+    emojis = ['1️⃣', '2️⃣', '3️⃣']
+
+    if str(reaction.emoji) in emojis:
+        choice = options[emojis.index(str(reaction.emoji))]
+        display_name = user.display_name
+        signup_list.append((display_name, choice))
+        print(f"{display_name} chose: {choice}")
+
 
 @bot.event
 async def on_message(message):
@@ -659,7 +686,8 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
     ]
 
     # Current date
-    current_date = date.today()
+    current_datetime = datetime.now(time_zone)
+    current_date = current_datetime.date()
 
     # Check if the provided timestamp matches any of the accepted formats
     valid_format = False
