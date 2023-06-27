@@ -1,22 +1,30 @@
 import discord
 from discord.ext import commands, tasks
 import time
-from datetime import datetime, timedelta, date, timezone
+from datetime import datetime, timedelta, timezone
 import re
-import serversettings as ss             # Server specific variables see the ss.py and insert your values
 import os
 import pandas as pd
 import asyncio
 import pytz
+import yaml
+
+
+def load_settings():
+    with open('settings.yaml', 'r') as f:
+        ss = yaml.safe_load(f)
+    return ss
 
 intents = discord.Intents.all()
 
+ss = load_settings()
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 # Variables for the server
-guild_id = ss.guild                         # Replace with your guild ID
-hnm_times =  ss.hnm_times                   # Replace with the HNM TIMES channel ID
-bot_commands = ss.bot_commands              # Replace with bot-commands channel ID
-bot_id = ss.bot_token                       # Replace with Bot Token
+guild_id = ss['guild']                         # Replace with your guild ID
+hnm_times =  ss['hnm_times']                   # Replace with the HNM TIMES channel ID
+bot_commands = ss['bot_commands']              # Replace with bot-commands channel ID
+bot_id = ss['bot_token']                       # Replace with Bot Token
 dkp_review_category_name = "DKP REVIEW"
 hnm_att_category_name = "HNM ATTENDANCE"
 att_arch_category_name = "ATTENDANCE ARCHIVE"
@@ -56,7 +64,7 @@ async def create_channel_task():
             else:
                 day = None
 
-            if any(keyword in message.content for keyword in ss.ignore_create_channels):
+            if any(keyword in message.content for keyword in ss['ignore_create_channels']):
                 continue
             elif "King Arthro" in message.content:
                 channel_name = "ka"
@@ -84,7 +92,7 @@ async def create_channel_task():
                 time_diff = unix_now - unix_target
 
                 # Subtract 10 minutes from the posted time and compare it to target_time
-                hnm_time = datetime.fromtimestamp(utc - (ss.make_channel * 60))
+                hnm_time = datetime.fromtimestamp(utc - (ss['make_channel'] * 60))
                 hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
 
                 # Create the channel inside the category with the calculated time
@@ -111,7 +119,7 @@ async def create_channel_task():
                             channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
                             await channel.edit(position=hnm_times_channel.position + 1)
                             await channel.send(f"{hnm_name}")
-                            await channel.send(f"@everyone First window in {ss.make_channel}-Minutes")
+                            await channel.send(f"@everyone First window in {ss['make_channel']}-Minutes")
                             wttask = asyncio.create_task(warn_ten(channel_name))
                             wttask.set_name(f"wt-{channel_name}")
                             wmtask = asyncio.create_task(window_manager(channel_name))
@@ -125,7 +133,7 @@ async def delete_old_channels():
         for channel in archive_category.channels:
             if isinstance(channel, discord.TextChannel):
                 now = datetime.now(timezone.utc)
-                if (now - channel.created_at).days >= ss.archive_wait:
+                if (now - channel.created_at).days >= ss['archive_wait']:
                     await channel.delete()
 
 @bot.event
@@ -136,33 +144,6 @@ async def on_ready():
     with open('images/logo.png', 'rb') as avatar_file:
         avatar = avatar_file.read()
         await bot.user.edit(avatar=avatar)
-
-@bot.command()
-async def signup(ctx):
-    options = ['Option 1', 'Option 2', 'Option 3']
-    message = await ctx.send(f"React with the corresponding emoji to choose an option:\n\n"
-                             f":one: {options[0]}\n"
-                             f":two: {options[1]}\n"
-                             f":three: {options[2]}")
-
-    emojis = ['1️⃣', '2️⃣', '3️⃣']
-    for emoji in emojis:
-        await message.add_reaction(emoji)
-
-@bot.event
-async def on_reaction_add(reaction, user):
-    if user == bot.user:
-        return
-
-    options = ['Option 1', 'Option 2', 'Option 3']
-    emojis = ['1️⃣', '2️⃣', '3️⃣']
-
-    if str(reaction.emoji) in emojis:
-        choice = options[emojis.index(str(reaction.emoji))]
-        display_name = user.display_name
-        signup_list.append((display_name, choice))
-        print(f"{display_name} chose: {choice}")
-
 
 @bot.event
 async def on_message(message):
@@ -175,7 +156,7 @@ async def on_message(message):
         else:
             await message.author.send(f"Please use the `!help` command in {bot_channel.mention}")
 
-    elif ss.clear_bot_commands == True:
+    elif ss['clear_bot_commands'] == True:
         # Check if the message is sent in the 'bot-commands' channel
         if message.channel.name == 'bot-commands':
             await message.delete()
@@ -475,7 +456,7 @@ async def archive(ctx, option=None):
             data = []
             async for message in channel.history(limit=None, oldest_first=True):
                 data.append({
-                    "Author": message.author.name,
+                    "Author": message.author.display_name,
                     "Content": message.content,
                     "Timestamp": message.created_at
                 })
@@ -508,7 +489,7 @@ async def archive(ctx, option=None):
         data = []
         async for message in channel.history(limit=None, oldest_first=True):
             data.append({
-                "Author": message.author.name,
+                "Author": message.author.display_name,
                 "Content": message.content,
                 "Timestamp": message.created_at
             })
@@ -567,7 +548,7 @@ async def warn_ten(channel_name):
     channels = category.channels
 
     for channel in channels:
-        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and all(keyword not in channel.name for keyword in ss.ignore_channels):
+        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and all(keyword not in channel.name for keyword in ss['ignore_channels']):
             async for message in channel.history(limit=1, oldest_first=True):
                 # Extract the UTC timestamp
                 utc_start = message.content.find("<t:")
@@ -582,7 +563,7 @@ async def warn_ten(channel_name):
                     if delay.total_seconds() > 0:
                         await asyncio.sleep(delay.total_seconds())
                     await channel.send(f"-------- Window opens in 10-Minutes x in --------")
-                    await channel.send(ss.window_message)
+                    await channel.send(ss['window_message'])
 
                     return
 
@@ -611,7 +592,7 @@ async def window_manager(channel_name):
     channels = category.channels
 
     for channel in channels:
-        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and all(keyword not in channel.name for keyword in ss.ignore_channels):
+        if isinstance(channel, discord.TextChannel) and channel_name in channel.name and all(keyword not in channel.name for keyword in ss['ignore_channels']):
             async for message in channel.history(limit=1, oldest_first=True):
                 # Extract the UTC timestamp
                 utc_start = message.content.find("<t:")
@@ -631,7 +612,7 @@ async def window_manager(channel_name):
                     while time_diff >= 0 and time_diff <= 3600:
                         if time_diff % 600 == 0:
                             window = round(time_diff / 600) + 1
-                            if ss.wm_close_trigger is True:
+                            if ss['wm_close_trigger'] is True:
                                 async for message in channel.history(limit=None):
                                     if message.content.lower() in ["!kill", "!pop", "!claim", "!ours"]:
                                         # Stop the window manager loop
