@@ -133,6 +133,9 @@ async def on_ready():
     print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
     delete_old_channels.start()
+    with open('images/logo.png', 'rb') as avatar_file:
+        avatar = avatar_file.read()
+        await bot.user.edit(avatar=avatar)
 
 @bot.command()
 async def signup(ctx):
