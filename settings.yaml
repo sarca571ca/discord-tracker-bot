@@ -24,7 +24,6 @@ gw_kill_dkp: 2                    # DKP values for kill on Grand Wyrvns
 gw_window_dkp: 0.5                # DKP values for camp windows for Grand Wyvrns
 ignore_channels:                  # Used the prevent the sending of window messages to certain channels
   - kv
-  - shi
   - tia
   - vrt
 ignore_create_channels:           # Used to prevent the creation of certain channels eg. KV because its random
