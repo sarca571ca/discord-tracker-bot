@@ -144,6 +144,11 @@ async def on_ready():
     with open('images/logo.png', 'rb') as avatar_file:
         avatar = avatar_file.read()
         await bot.user.edit(avatar=avatar)
+    guild = bot.get_guild(guild_id)
+    member = guild.get_member(bot.user.id)
+    if member:
+        display_name = "Alise"
+        print(f"Display name set to: {display_name}")
 
 @bot.event
 async def on_message(message):
