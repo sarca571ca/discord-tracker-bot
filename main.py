@@ -148,6 +148,7 @@ async def on_ready():
     member = guild.get_member(bot.user.id)
     if member:
         display_name = "Alise"
+        await member.edit(nick=display_name)
         print(f"Display name set to: {display_name}")
 
 @bot.event
