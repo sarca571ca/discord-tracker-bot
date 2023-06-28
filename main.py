@@ -30,7 +30,7 @@ hnm_att_category_name = "HNM ATTENDANCE"
 att_arch_category_name = "ATTENDANCE ARCHIVE"
 time_zone = pytz.timezone('America/Los_Angeles')
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=60)
 async def create_channel_task():
 #######################################################################################
 # create_channel_task _________________________________________________________________
@@ -50,91 +50,116 @@ async def create_channel_task():
 
     now = int(time.time())
     target_time = datetime.fromtimestamp(now)
+    try:
+        # Read messages from the target channels
+        async for message in hnm_times_channel.history(limit=None, oldest_first=True):
+            if message.content.startswith("-"):
 
-    # Read messages from the target channels
-    async for message in hnm_times_channel.history(limit=None, oldest_first=True):
-        if message.content.startswith("-"):
+                # Extract the day
+                day_start = message.content.find("(")
+                day_end = message.content.find(")")
+                if day_start != -1 and day_end != -1:
+                    raw_day = message.content[day_start + 1:day_end].strip()
+                    day = ref(raw_day)
+                else:
+                    day = None
 
-            # Extract the day
-            day_start = message.content.find("(")
-            day_end = message.content.find(")")
-            if day_start != -1 and day_end != -1:
-                raw_day = message.content[day_start + 1:day_end].strip()
-                day = ref(raw_day)
-            else:
-                day = None
+                if any(keyword in message.content for keyword in ss['ignore_create_channels']):
+                    continue
+                elif "King Arthro" in message.content:
+                    channel_name = "ka"
+                else:
+                    if day == None or int(day) <= 3:
+                        channel_name = message.content[2:5].strip()
+                    elif int(day) >= 4:
+                        nq = message.content[2:5].strip()
+                        hq_start = message.content.find("/") + 1
+                        hq_end = message.content.find("(")
+                        hq = message.content[hq_start:hq_end].strip()[:3]
+                        channel_name = f"{nq}"
 
-            if any(keyword in message.content for keyword in ss['ignore_create_channels']):
-                continue
-            elif "King Arthro" in message.content:
-                channel_name = "ka"
-            else:
-                if day == None or int(day) <= 3:
-                    channel_name = message.content[2:5].strip()
-                elif int(day) >= 4:
-                    nq = message.content[2:5].strip()
-                    hq_start = message.content.find("/") + 1
-                    hq_end = message.content.find("(")
-                    hq = message.content[hq_start:hq_end].strip()[:3]
-                    channel_name = f"{nq}"
+                # Extract UTC timestamp
+                utc_start = message.content.find("<t:")
+                utc_end = message.content.find(":T>")
+                if utc_start != -1 and utc_end != -1:
+                    utc = int(message.content[utc_start + 3:utc_end])
+                    dt = datetime.fromtimestamp(utc)
+                    date = dt.strftime("%b%d").lower()
+                    hnm = channel_name.upper()
+                    hnm_name = message.content
+                    unix_now = int(datetime.now().timestamp())
+                    unix_target = int(dt.timestamp())
+                    time_diff = unix_now - unix_target
 
-            # Extract UTC timestamp
-            utc_start = message.content.find("<t:")
-            utc_end = message.content.find(":T>")
-            if utc_start != -1 and utc_end != -1:
-                utc = int(message.content[utc_start + 3:utc_end])
-                dt = datetime.fromtimestamp(utc)
-                date = dt.strftime("%b%d").lower()
-                hnm = channel_name.upper()
-                hnm_name = message.content
-                unix_now = int(datetime.now().timestamp())
-                unix_target = int(dt.timestamp())
-                time_diff = unix_now - unix_target
+                    # Subtract 10 minutes from the posted time and compare it to target_time
+                    hnm_time = datetime.fromtimestamp(utc - (ss['make_channel'] * 60))
+                    hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
 
-                # Subtract 10 minutes from the posted time and compare it to target_time
-                hnm_time = datetime.fromtimestamp(utc - (ss['make_channel'] * 60))
-                hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
-
-                # Create the channel inside the category with the calculated time
-                if hnm_window_end >= target_time:
-                    if hnm_time <= target_time:
-                        if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
-                            channel_name = f"{date}-{hnm}{day}".lower()
-                        else:
-                            channel_name = f"{date}-{hnm}".lower()
-
-                        existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                        if existing_channel:
-                            await asyncio.sleep(5)
-                            # Check if a window_manager task is already running for the channel
-                            for task in asyncio.all_tasks():
-                                if task.get_name() == f"wm-{channel_name}":
-                                    break
+                    # Create the channel inside the category with the calculated time
+                    if hnm_window_end >= target_time:
+                        if hnm_time <= target_time:
+                            if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
+                                channel_name = f"{date}-{hnm}{day}".lower()
                             else:
-                                # Channel already exists, check if it qualifies for window_manager
-                                if time_diff >= 0 and time_diff <= 3900:
-                                    wmtask = asyncio.create_task(window_manager(channel_name))
-                                    wmtask.set_name(f"wm-{channel_name}")
-                        else:
-                            channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
-                            await channel.edit(position=hnm_times_channel.position + 1)
-                            await channel.send(f"{hnm_name}")
-                            await channel.send(f"@everyone First window in {ss['make_channel']}-Minutes")
-                            wttask = asyncio.create_task(warn_ten(channel_name))
-                            wttask.set_name(f"wt-{channel_name}")
-                            wmtask = asyncio.create_task(window_manager(channel_name))
-                            wmtask.set_name(f"wm-{channel_name}")
+                                channel_name = f"{date}-{hnm}".lower()
+
+                            existing_channel = discord.utils.get(guild.channels, name=channel_name)
+                            if existing_channel:
+                                await asyncio.sleep(5)
+                                # Check if a window_manager task is already running for the channel
+                                for task in asyncio.all_tasks():
+                                    if task.get_name() == f"wm-{channel_name}":
+                                        break
+                                else:
+                                    # Channel already exists, check if it qualifies for window_manager
+                                    if time_diff >= 0 and time_diff <= 3900:
+                                        wmtask = asyncio.create_task(window_manager(channel_name))
+                                        wmtask.set_name(f"wm-{channel_name}")
+                            else:
+                                channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
+                                await channel.edit(position=hnm_times_channel.position + 1)
+                                await channel.send(f"{hnm_name}")
+                                await channel.send(f"@everyone First window in {ss['make_channel']}-Minutes")
+                                wttask = asyncio.create_task(warn_ten(channel_name))
+                                wttask.set_name(f"wt-{channel_name}")
+                                wmtask = asyncio.create_task(window_manager(channel_name))
+                                wmtask.set_name(f"wm-{channel_name}")
+            pass
+    except discord.errors.DiscordServerError as e:
+        if e.code == 0 and e.status == 503:
+            print("Service Unavailable error. Retrying in 60 seconds...")
+            await asyncio.sleep(60)  # Adjust the delay as needed
+            create_channel_task.start()  # Restart the task
+        else:
+            # Handle other Discord server errors
+            print(f"DiscordServerError: {e}")
+    except Exception as e:
+        # Handle other exceptions
+        print(f"Error: {e}")
 
 
 @tasks.loop(hours=24)
 async def delete_old_channels():
-    archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)
-    if archive_category:
-        for channel in archive_category.channels:
-            if isinstance(channel, discord.TextChannel):
-                now = datetime.now(timezone.utc)
-                if (now - channel.created_at).days >= ss['archive_wait']:
-                    await channel.delete()
+    try:
+        archive_category = discord.utils.get(bot.guilds[0].categories, name=att_arch_category_name)
+        if archive_category:
+            for channel in archive_category.channels:
+                if isinstance(channel, discord.TextChannel):
+                    now = datetime.now(timezone.utc)
+                    if (now - channel.created_at).days >= ss['archive_wait']:
+                        await channel.delete()
+        pass
+    except discord.errors.DiscordServerError as e:
+        if e.code == 0 and e.status == 503:
+            print("Service Unavailable error. Retrying in 60 seconds...")
+            await asyncio.sleep(60)  # Adjust the delay as needed
+            delete_old_channels.start()  # Restart the task
+        else:
+            # Handle other Discord server errors
+            print(f"DiscordServerError: {e}")
+    except Exception as e:
+        # Handle other exceptions
+        print(f"Error: {e}")
 
 @bot.event
 async def on_ready():
