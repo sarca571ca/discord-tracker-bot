@@ -111,8 +111,10 @@ async def create_channel_task():
                                     if task.get_name() == f"wm-{channel_name}":
                                         break
                                 else:
+                                    pop = f"pop-{channel_name}"
                                     # Channel already exists, check if it qualifies for window_manager
-                                    if time_diff >= 0 and time_diff <= 3900:
+                                    if time_diff >= 0 and time_diff <= 3900 and not pop: # Maybe this will prevent a new WM being created after a camp has been closed?
+                                    # if time_diff >= 0 and time_diff <= 3900:
                                         wmtask = asyncio.create_task(window_manager(channel_name))
                                         wmtask.set_name(f"wm-{channel_name}")
                             else:
@@ -612,8 +614,6 @@ async def window_manager(channel_name):
     category_name = hnm_att_category_name
     category = discord.utils.get(guild.categories, name=category_name)
 
-    dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
-
     # Adding a sleep to the task to deal with any potential latency issues.
     await asyncio.sleep(1)
 
@@ -646,18 +646,9 @@ async def window_manager(channel_name):
                             if ss['wm_close_trigger'] is True:
                                 async for message in channel.history(limit=None):
                                     if message.content.lower() in ["!kill", "!pop", "!claim", "!ours"]:
-                                        # Stop the window manager loop
-                                        await asyncio.sleep(300)
-                                        await channel.send("Moving channel for dkp review in 5 minutes.")
-                                        await asyncio.sleep(300)
-                                        await channel.edit(category=dkp_review_category)
                                         return await calculate_DKP(channel, channel_name, window)
                             if "shi" in channel.name:
                                 await channel.send(f"------------ Shikigami Weapon has spawned ------------")
-                                await asyncio.sleep(300)
-                                await channel.send("Moving channel for dkp review in 5 minutes.")
-                                await asyncio.sleep(300)
-                                await channel.edit(category=dkp_review_category)
                                 return await calculate_DKP(channel, channel_name, window - 1)
                             else:
                                 await channel.send(f"--------------- Window {window} is now ---------------")
@@ -665,16 +656,17 @@ async def window_manager(channel_name):
                         await asyncio.sleep(1)
                         time_diff = int(datetime.now().timestamp()) - unix_target
 
-                    await asyncio.sleep(300)
-
-                    await channel.send("Moving channel for dkp review in 5 minutes.")
-                    await asyncio.sleep(300)
-
-                    await channel.edit(category=dkp_review_category)
                     return await calculate_DKP(channel, channel_name, window - 1)
 
 # Build this function out to handle calculating dkp and listen for late x's in the channel
 async def calculate_DKP(channel, channel_name, w):
+    guild = bot.get_guild(guild_id)
+    dkp_review_category = discord.utils.get(guild.categories, name=dkp_review_category_name)
+
+    await asyncio.sleep(300)
+    await channel.send("Moving channel for dkp review in 5 minutes.")
+    await asyncio.sleep(300)
+    await channel.edit(category=dkp_review_category)
     await channel.send("!DKPExport")
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp):
