@@ -1,13 +1,12 @@
 # Bot Token
 bot_token: bot token goes here
 
-guild: 1071271557336399992        # Guild ID
-hnm_times: 1090003455638241351    # Channel ID where the camp times are posted
-bot_commands: 1123450716212711536 # Designated bot-commands channel for setting ToD's
+guild: 876434275661135982        # Guild ID
+hnm_times: 1110052586561744896    # Channel ID where the camp times are posted
+bot_commands: 1110076161201020949 # Designated bot-commands channel for setting ToD's
 make_channel: 30                  # Makes a channel 30-Minutes before window
 move_review: 3                    # Moves the channel for DKP Review 3-hours after first window
 clear_bot_commands: False
-wm_close_trigger: False           # True or False determines whether the use of pop, claim, kill, and ours in channel closes the window
 archive_channel: 4                # Archive the channel as a csv on the bot server after 4 hours after review or when command !archive is issued.
 archive_wait: 5                   # The amount aof days a channel can sit in the archive channel. This counts from when the channel was created.
 window_dkp: 0.25                  # DKP values for camp windows for ground kings
