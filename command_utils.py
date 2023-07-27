@@ -1,6 +1,9 @@
 import discord
 import pytz
 import asyncio
+import aiofiles
+import os
+import pandas as pd
 
 from datetime import datetime, timedelta
 
@@ -162,9 +165,9 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                 async for message in existing_channel.history(limit=1, oldest_first=True):
                     if message.content.startswith("- "):
                         channel_dt, channel_utc = calculate_time_diff(message.content)
-                if channel_utc == utc and category != hnm_att_category_name:
+                if channel_utc == utc and str(category) != hnm_att_category_name:
                     return
-                elif channel_utc == utc and category == hnm_att_category_name:
+                elif channel_utc == utc and str(category) == hnm_att_category_name:
                     await asyncio.sleep(5)
                     for task in asyncio.all_tasks():
                         if task.get_name() == f"wm-{channel_name}":
@@ -180,3 +183,92 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                         await start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
             else:
                 await start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
+
+async def archive_channels(archive_category, archive_channel, category, option):
+    data_dir = "data"
+    backups_dir = "backups"
+    category_folder = f"{category}"
+
+    dir_structure = [data_dir, backups_dir, category_folder]
+
+    current_path = ''
+    for directory in dir_structure:
+        current_path = os.path.join(current_path, directory)
+        if not os.path.exists(current_path):
+            os.mkdir(current_path)
+
+    log_file_path = os.path.join(current_path, 'log.txt')
+
+    if option == "delete":
+        channel = archive_channel
+        file_name = os.path.join(current_path, f"{channel.name}.csv")
+
+        data = []
+        async for message in channel.history(limit=None, oldest_first=True):
+            data.append({
+                "Author": message.author.display_name,
+                "Content": message.content,
+                "Timestamp": message.created_at
+            })
+
+        df = pd.DataFrame(data)
+        df.to_csv(file_name, index=False)
+
+        log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
+        async with aiofiles.open(log_file_path, "a") as file:
+            await file.write(log_message + "\n")
+
+        await channel.delete()
+
+    elif option == "all":  # 'all' argument will archive all channels in the category
+        channels = category.channels
+
+        for channel in channels:
+            if isinstance(channel, (discord.VoiceChannel, discord.CategoryChannel)):
+                continue
+
+            file_name = os.path.join(current_path, f"{channel.name}.csv")
+
+            data = []
+            async for message in channel.history(limit=None, oldest_first=True):
+                data.append({
+                    "Author": message.author.display_name,
+                    "Content": message.content,
+                    "Timestamp": message.created_at
+                })
+
+            df = pd.DataFrame(data)
+            df.to_csv(file_name, index=False)
+
+            if archive_category:
+                await channel.edit(category=archive_category)
+            else:
+                await channel.send("The 'Archive' category does not exist.")
+
+            log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
+            async with aiofiles.open(log_file_path, "a") as file:
+                await file.write(log_message + "\n")
+
+    else:
+        channel = archive_channel
+        file_name = os.path.join(current_path, f"{channel.name}.csv")
+
+        data = []
+        async for message in channel.history(limit=None, oldest_first=True):
+            data.append({
+                "Author": message.author.display_name,
+                "Content": message.content,
+                "Timestamp": message.created_at
+            })
+
+        df = pd.DataFrame(data)
+        df.to_csv(file_name, index=False)
+
+        if archive_category:
+            await channel.edit(category=archive_category)
+        else:
+            await channel.send("The 'Archive' category does not exist.")
+
+        log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
+        async with aiofiles.open(log_file_path, "a") as file:
+            await file.write(log_message + "\n")

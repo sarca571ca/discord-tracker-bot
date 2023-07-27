@@ -3,16 +3,14 @@ import time
 import asyncio
 import pytz
 import asyncio
-import os
-import pandas as pd
 
 from datetime import datetime, timezone
 from discord.ext import commands, tasks
 
 import config
 from string_utils import ref, load_settings, calculate_time_diff, log_print
-from channel_utils import calculate_DKP, close_manager
-from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window
+from channel_utils import calculate_DKP, close_manager, restart_channel_tasks
+from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels
 
 intents = discord.Intents.all()
 
@@ -31,18 +29,9 @@ time_zone = pytz.timezone('America/Los_Angeles')
 
 @tasks.loop(seconds=60)
 async def create_channel_task():
-#######################################################################################
-# create_channel_task _________________________________________________________________
-# Task currently creates a channel 30 minutes prior to window and notifies everyone.
-# ToDo:
-#   - Grand Wyrvn's will be managed by guild memembers
-########################################################################################
-
-    hnm_times_channel_id = hnm_times
-
     guild = bot.get_guild(guild_id)
     category = discord.utils.get(guild.categories, name=hnm_att_category_name)
-    hnm_times_channel = bot.get_channel(hnm_times_channel_id)
+    hnm_times_channel = bot.get_channel(hnm_times)
 
     if not category:
         category = await guild.create_category(hnm_att_category_name)
@@ -112,8 +101,7 @@ async def delete_old_channels():
                 if isinstance(channel, discord.TextChannel):
                     now = datetime.now(timezone.utc)
                     if (now - channel.created_at).days >= ss['archive_wait']:
-                        # add in archive function here to capture changes made in dkp-review
-                        await channel.delete()
+                        await archive_channels(archive_category, channel, archive_category, option="delete")
         pass
     except discord.errors.DiscordServerError as e:
         if e.code == 0 and e.status == 503:
@@ -321,6 +309,10 @@ async def open(ctx):
         if task.get_name() == f"wm-{ctx.channel.name}":
             await ctx.author.send(f"{ctx.channel.name} is already open.")
             task_running = True
+        elif task.get_name() == f"close-{ctx.channel.name}":
+            task.cancel()
+            log_print(f"Open: Close-Task for channel {ctx.channel.name} was cancelled.")
+
     if not task_running:
         process_dict = {
             "id": ctx.channel.id,
@@ -332,6 +324,13 @@ async def open(ctx):
         await ctx.message.delete()
         await ctx.send("---------------------- Open x-in ---------------------")
         log_print(f"Open: {ctx.author.display_name} opened {ctx.channel.name}.")
+        async for message in ctx.channel.history(limit=None, oldest_first=True):
+            if message.content.startswith("- "):
+                dt, utc = calculate_time_diff(message.content)
+                unix_now = int(datetime.now().timestamp())
+                unix_target = int(dt.timestamp())
+                time_diff = unix_now - unix_target
+                await restart_channel_tasks(ctx.guild, ctx.channel.name, ctx.channel.category, time_diff, ctx.channel)
 open.brief = f"Used to close channels."
 open.usage = ""
 
@@ -339,82 +338,14 @@ open.usage = ""
 
 @bot.command() # Archive command used for moving channels from DKP Review Category
 async def archive(ctx, option=None):
+    channel = ctx.channel
     category = ctx.channel.category
+    archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
 
     if not category or category.name != dkp_review_category_name:
         await ctx.send("The command can only be used in the 'DKP REVIEW' category.")
         return
 
-    dt = "data"
-    if not os.path.exists(dt):
-        os.mkdir(dt)
-
-    backups = f"backups"
-    if not os.path.exists(f"{dt}/{backups}"):
-        os.mkdir(f"{dt}/{backups}")
-
-    folder_name = f"{category}"
-    if not os.path.exists(f"{dt}/{backups}/{folder_name}"):
-        os.mkdir(f"{dt}/{backups}/{folder_name}")
-
-    log_file = f"{dt}/{backups}/{folder_name}/log.txt"
-
-    if option == "all": # all argument will archive all channels in the category
-        channels = category.channels
-
-        for channel in channels:
-            if isinstance(channel, (discord.VoiceChannel, discord.CategoryChannel)):
-                continue
-
-            file_name = f"{dt}/{backups}/{folder_name}/{channel.name}.csv"
-
-            data = []
-            async for message in channel.history(limit=None, oldest_first=True):
-                data.append({
-                    "Author": message.author.display_name,
-                    "Content": message.content,
-                    "Timestamp": message.created_at
-                })
-
-            df = pd.DataFrame(data)
-
-            df.to_csv(file_name, index=False)
-
-            archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
-            if archive_category:
-                await channel.edit(category=archive_category)
-            else:
-                await ctx.send("The 'Archive' category does not exist.")
-
-            log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
-            with open(log_file, "a") as file:
-                file.write(log_message + "\n")
-
-    else:
-        channel = ctx.channel
-
-        file_name = f"{dt}/{backups}/{folder_name}/{channel.name}.csv"
-
-        data = []
-        async for message in channel.history(limit=None, oldest_first=True):
-            data.append({
-                "Author": message.author.display_name,
-                "Content": message.content,
-                "Timestamp": message.created_at
-            })
-
-        df = pd.DataFrame(data)
-
-        df.to_csv(file_name, index=False)
-
-        archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
-        if archive_category:
-            await channel.edit(category=archive_category)
-        else:
-            await ctx.send("The 'Archive' category does not exist.")
-
-        log_message = f"Channel '{channel.name}' has been archived at {datetime.now()}"
-        with open(log_file, "a") as file:
-            file.write(log_message + "\n")
+    await archive_channels(archive_category, channel, category, option)
 
 bot.run(bot_id)
