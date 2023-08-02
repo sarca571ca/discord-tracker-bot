@@ -5,3 +5,5 @@ __pycache__
 data
 modules
 ss.yaml
+backups/settings.yaml
+token

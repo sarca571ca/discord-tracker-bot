@@ -10,7 +10,7 @@ from discord.ext import commands, tasks
 import config
 from string_utils import ref, load_settings, calculate_time_diff, log_print
 from channel_utils import calculate_DKP, close_manager, restart_channel_tasks
-from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels
+from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels, handle_bnm_command
 
 intents = discord.Intents.all()
 
@@ -132,9 +132,9 @@ async def on_ready():
 async def Fafnir(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp, hnm_channel, bot_channel, bot.user)
 Fafnir.brief = f"Used to set the ToD of Fafnir/Nidhogg."
 Fafnir.usage = "<day> <timestamp>"
 
@@ -142,9 +142,9 @@ Fafnir.usage = "<day> <timestamp>"
 async def Adamantoise(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp, hnm_channel, bot_channel, bot.user)
 Adamantoise.brief = f"Used to set the ToD of Adamantoise/Aspidochelone."
 Adamantoise.usage = "<day> <timestamp>"
 
@@ -152,9 +152,9 @@ Adamantoise.usage = "<day> <timestamp>"
 async def Behemoth(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp, hnm_channel, bot_channel, bot.user)
 Behemoth.brief = f"Used to set the ToD of Behemoth/King Behemoth."
 Behemoth.usage = "<day> <timestamp>"
 
@@ -162,9 +162,9 @@ Behemoth.usage = "<day> <timestamp>"
 async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 KingArthro.brief = f"Used to set the ToD of King Arthro."
 KingArthro.usage = "<day> <timestamp>"
 
@@ -172,9 +172,9 @@ KingArthro.usage = "<day> <timestamp>"
 async def Simurgh(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Simurgh", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Simurgh", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Simurgh.brief = f"Used to set the ToD of Simurgh."
 Simurgh.usage = "<day> <timestamp>"
 
@@ -182,9 +182,9 @@ Simurgh.usage = "<day> <timestamp>"
 async def ShikigamiWeapon(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 ShikigamiWeapon.brief = f"Used to set the ToD of Shikigami Weapon."
 ShikigamiWeapon.usage = "<day> <timestamp>"
 
@@ -192,9 +192,9 @@ ShikigamiWeapon.usage = "<day> <timestamp>"
 async def KingVinegarroon(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 KingVinegarroon.brief = f"Used to set the ToD of King Vinegarroon."
 KingVinegarroon.usage = "<day> <timestamp>"
 
@@ -202,9 +202,9 @@ KingVinegarroon.usage = "<day> <timestamp>"
 async def Vrtra(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Vrtra", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Vrtra", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Vrtra.brief = f"Used to set the ToD of Vrtra."
 Vrtra.usage = "<day> <timestamp>"
 
@@ -212,9 +212,9 @@ Vrtra.usage = "<day> <timestamp>"
 async def Tiamat(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Tiamat", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Tiamat", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Tiamat.brief = f"Used to set the ToD of Tiamat."
 Tiamat.usage = "<day> <timestamp>"
 
@@ -222,11 +222,45 @@ Tiamat.usage = "<day> <timestamp>"
 async def Jormungand(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Jormungand", None, day, timestamp, channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Jormungand", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Jormungand.brief = f"Used to set the ToD of Jormungand."
 Jormungand.usage = "<day> <timestamp>"
+
+@bot.command(aliases=["orc", "overlord", "bag"])
+async def OverlordBakgodek(ctx, day: str = commands.parameter(default="Day", description=config.day),
+                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+                ):
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+
+    if ss['allow_bnm'] is not False:
+        await handle_bnm_command(ctx, "Orcish Overlord", "Overlord Bakgodek", day, timestamp, bnm_channel, bot_channel, bot.user)
+        
+OverlordBakgodek.brief = f"Used to set the ToD of Jormungand."
+OverlordBakgodek.usage = "<day> <timestamp>"
+
+@bot.command(aliases=["quad", "adaman", "zadha"])
+async def ZaDhaAdamantking(ctx, day: str = commands.parameter(default="Day", description=config.day),
+                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+                ):
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+
+    if ss['allow_bnm'] is not False:
+        await handle_bnm_command(ctx, "Diamond Quadav", "Za'Dha Adamantking", day, timestamp, bnm_channel, bot_channel, bot.user)
+ZaDhaAdamantking.brief = f"Used to set the ToD of Jormungand."
+ZaDhaAdamantking.usage = "<day> <timestamp>"
+
+@bot.command(aliases=["yag", "mani", "tzee"])
+async def TzeeXicutheManifest(ctx, day: str = commands.parameter(default="Day", description=config.day),
+                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+                ):
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+
+    if ss['allow_bnm'] is not False:
+        await handle_bnm_command(ctx, "Yagudo Avatar", "Tzee Xicu the Manifest", day, timestamp, bnm_channel, bot_channel, bot.user)
+TzeeXicutheManifest.brief = f"Used to set the ToD of Jormungand."
+TzeeXicutheManifest.usage = "<day> <timestamp>"
 
 @bot.command()
 async def sort(ctx): # Command used to sort the hnm-times
