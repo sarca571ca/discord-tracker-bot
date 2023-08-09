@@ -12,13 +12,13 @@ from channel_utils import start_channel_tasks, restart_channel_tasks
 
 # Settings
 ss = load_settings()
-hnm_times =  ss['hnm_times']                   # Replace with the HNM TIMES channel ID
+hnm_times =  ss['hnm_times']
 bnm_times = ss['bnm_times']
-bot_commands = ss['bot_commands']              # Replace with bot-commands channel ID
-dkp_review_category_name = "DKP REVIEW"
-hnm_att_category_name = "HNM ATTENDANCE"
-att_arch_category_name = "ATTENDANCE ARCHIVE"
-time_zone = pytz.timezone('America/Los_Angeles')
+bot_commands = ss['bot_commands']
+dkp_review_category_name = ss['dkp_review_category_name']
+hnm_att_category_name = ss['hnm_att_category_name']
+att_arch_category_name = ss['att_arch_category_name']
+time_zone = pytz.timezone(ss['time_zone'])
 
 async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_channel, bot):
     original_hnm = hnm  # Store the original HNM name

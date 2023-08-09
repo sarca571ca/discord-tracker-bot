@@ -17,15 +17,60 @@ intents = discord.Intents.all()
 ss = load_settings()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-# Variables for the server
-guild_id = ss['guild']                         # Replace with your guild ID
-hnm_times =  ss['hnm_times']                   # Replace with the HNM TIMES channel ID
-bot_commands = ss['bot_commands']              # Replace with bot-commands channel ID
-bot_id = ss['bot_token']                       # Replace with Bot Token
-dkp_review_category_name = "DKP REVIEW"
-hnm_att_category_name = "HNM ATTENDANCE"
-att_arch_category_name = "ATTENDANCE ARCHIVE"
-time_zone = pytz.timezone('America/Los_Angeles')
+
+# Settings
+guild_id = ss['guild']
+hnm_times =  ss['hnm_times']
+bot_commands = ss['bot_commands']
+camp_pings = ss['camp_pings']
+bot_id = ss['bot_token']
+dkp_review_category_name = ss['dkp_review_category_name']
+hnm_att_category_name = ss['hnm_att_category_name']
+att_arch_category_name = ss['att_arch_category_name']
+time_zone = pytz.timezone(ss['time_zone'])
+
+@tasks.loop(seconds=60)
+async def send_hour_warning_task():
+    guild = bot.get_guild(guild_id)
+    hnm_times_channel = bot.get_channel(hnm_times)
+    camp_pings_channel = bot.get_channel(camp_pings)
+    now = int(time.time())
+    target_time = datetime.fromtimestamp(now)
+
+    try:
+        async for message in hnm_times_channel.history(limit=None, oldest_first=True):
+            if message.content.startswith("- "):
+                dt, utc = calculate_time_diff(message.content)
+                warning_msg = message.content.replace("- ", "", 1)
+                hour_warn_time = datetime.fromtimestamp(utc - (60 * 60))
+                camp_end_time = datetime.fromtimestamp(utc + (60 * 60))
+
+                if camp_end_time >= target_time and hour_warn_time <= target_time:
+                    if camp_pings_channel:
+                        last_message = [msg async for msg in camp_pings_channel.history(limit=1)]
+
+                        if last_message:
+                            message_sent = False
+
+                            async for msg in camp_pings_channel.history(limit=None, oldest_first=False):
+                                if warning_msg == msg.content.replace("@everyone ", "", 1):
+                                    message_sent = True
+                                    break
+
+                            if not message_sent:
+                                await camp_pings_channel.send(f"@everyone {warning_msg}")
+                        else:
+                            await camp_pings_channel.send(f"@everyone {warning_msg}")
+            pass
+    except discord.errors.DiscordServerError as e:
+        if e.code == 0 and e.status == 503:
+            log_print("Service Unavailable error. Retrying in 60 seconds...")
+            await asyncio.sleep(60)
+            create_channel_task.start()
+        else:
+            log_print(f"DiscordServerError: {e}")
+    except Exception as e:
+        log_print(f"Error: {e}")
 
 @tasks.loop(seconds=60)
 async def create_channel_task():
@@ -68,12 +113,11 @@ async def create_channel_task():
                 dt, utc = calculate_time_diff(message.content) # Extracts the utc timestamp
                 date = dt.strftime("%b%d").lower()
                 hnm = channel_name.upper()
-                hnm_name = message.content
+                hnm_name = message.content.replace("- ", "", 1)
                 unix_now = int(datetime.now().timestamp())
                 unix_target = int(dt.timestamp())
                 time_diff = unix_now - unix_target
 
-                # Subtract 10 minutes from the posted time and compare it to target_time
                 hnm_time = datetime.fromtimestamp(utc - (ss['make_channel'] * 60))
                 hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
 
@@ -118,6 +162,7 @@ async def on_ready():
     log_print(f"Logged in as {bot.user.name}")
     create_channel_task.start()
     delete_old_channels.start()
+    send_hour_warning_task.start()
     # with open('images/logo.png', 'rb') as avatar_file:
     #     avatar = avatar_file.read()
     #     await bot.user.edit(avatar=avatar)

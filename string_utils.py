@@ -60,5 +60,5 @@ def calculate_time_diff(message_content):
         return None, None  # If no valid timestamp found, return None
 
 def log_print(msg):
-    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S] [ALISE   ]")
     print(f"{timestamp} {msg}")
