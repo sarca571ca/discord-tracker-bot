@@ -13,13 +13,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Settings
 ss = load_settings()
-guild_id = ss['guild']                         # Replace with your guild ID
-hnm_times =  ss['hnm_times']                   # Replace with the HNM TIMES channel ID
-bot_commands = ss['bot_commands']              # Replace with bot-commands channel ID
-dkp_review_category_name = "DKP REVIEW"
-hnm_att_category_name = "HNM ATTENDANCE"
-att_arch_category_name = "ATTENDANCE ARCHIVE"
-time_zone = pytz.timezone('America/Los_Angeles')
+guild_id = ss['guild']
+hnm_times =  ss['hnm_times']
+bot_commands = ss['bot_commands']
+dkp_review_category_name = ss['dkp_review_category_name']
+hnm_att_category_name = ss['hnm_att_category_name']
+att_arch_category_name = ss['att_arch_category_name']
+time_zone = pytz.timezone(ss['time_zone'])
 
 async def warn_ten(channel_name, category):
     now = datetime.now()
@@ -121,7 +121,6 @@ async def start_channel_tasks(guild, channel_name, category, utc, hnm_times_chan
     channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
     await channel.edit(position=hnm_times_channel.position + 1)
     await channel.send(f"{hnm_name}")
-    await channel.send(f"@everyone First window in {ss['make_channel']}-Minutes")
     wttask = asyncio.create_task(warn_ten(channel_name, category))
     wttask.set_name(f"wt-{channel_name}")
     task_name = wttask.get_name()
