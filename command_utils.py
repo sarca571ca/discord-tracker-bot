@@ -258,8 +258,7 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
             existing_channel = discord.utils.get(guild.channels, name=channel_name)
             if existing_channel:
                 async for message in existing_channel.history(limit=1, oldest_first=True):
-                    if message.content.startswith("- "):
-                        channel_dt, channel_utc = calculate_time_diff(message.content)
+                    channel_dt, channel_utc = calculate_time_diff(message.content)
                 if channel_utc == utc and str(category) != hnm_att_category_name:
                     return
                 elif channel_utc == utc and str(category) == hnm_att_category_name:

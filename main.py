@@ -317,8 +317,7 @@ async def sort(ctx): # Command used to sort the hnm-times
 @bot.command(name='pop')
 async def pop(ctx):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
-        if message.content.startswith("- "):
-            dt, utc = calculate_time_diff(message.content)
+        dt, utc = calculate_time_diff(message.content)
 
     if isinstance(ctx.channel.name, discord.TextChannel):
         log_print(f"Pop: Channel {ctx.channel.name} is not a text channel. Ignoring.")
@@ -350,8 +349,7 @@ pop.usage = ""
 @bot.command(name='close')
 async def close(ctx):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
-        if message.content.startswith("- "):
-            dt, utc = calculate_time_diff(message.content)
+        dt, utc = calculate_time_diff(message.content)
 
     existing_task = asyncio.all_tasks()
     for task in existing_task:
@@ -379,8 +377,7 @@ close.usage = ""
 @bot.command(name='open')
 async def open(ctx):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
-        if message.content.startswith("- "):
-            dt, utc = calculate_time_diff(message.content)
+        dt, utc = calculate_time_diff(message.content)
 
     existing_task = asyncio.all_tasks()
     task_running = False
@@ -404,12 +401,11 @@ async def open(ctx):
         await ctx.send("---------------------- Open x-in ---------------------")
         log_print(f"Open: {ctx.author.display_name} opened {ctx.channel.name}.")
         async for message in ctx.channel.history(limit=None, oldest_first=True):
-            if message.content.startswith("- "):
-                dt, utc = calculate_time_diff(message.content)
-                unix_now = int(datetime.now().timestamp())
-                unix_target = int(dt.timestamp())
-                time_diff = unix_now - unix_target
-                await restart_channel_tasks(ctx.guild, ctx.channel.name, ctx.channel.category, time_diff, ctx.channel)
+            dt, utc = calculate_time_diff(message.content)
+            unix_now = int(datetime.now().timestamp())
+            unix_target = int(dt.timestamp())
+            time_diff = unix_now - unix_target
+            await restart_channel_tasks(ctx.guild, ctx.channel.name, ctx.channel.category, time_diff, ctx.channel)
 open.brief = f"Used to close channels."
 open.usage = ""
 
