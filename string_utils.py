@@ -1,9 +1,11 @@
 import re
 import yaml
 from datetime import datetime
+import config
+
 
 def load_settings():
-    with open('settings.yaml', 'r') as f:
+    with open('settings/settings.yaml', 'r') as f:
         ss = yaml.safe_load(f)
     return ss
 
@@ -62,3 +64,36 @@ def calculate_time_diff(message_content):
 def log_print(msg):
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S] [ALISE   ]")
     print(f"{timestamp} {msg}")
+
+async def find_last_window(ctx):
+    async for message in ctx.channel.history(limit=None, oldest_first=False):
+        match = re.search(r"------------------- Window (\d+) is now ------------------", message.content)
+        if match:
+            window_number = match.group(1)  # Extract and convert the number to an integer
+            window = f"Window {window_number}"
+            return window
+
+async def format_window_heading(word):
+    word = word[:48]
+    
+    # Calculate the number of dashes needed on each side
+    dash_count = (54 - len(word)) // 2
+    
+    # Create the formatted string
+    heading = '-' * dash_count + ' ' + word + ' ' + '-' * dash_count
+    
+    return heading
+
+def find_hnm_location(channel):
+    for keyword, keyword_dict in config.location_tables.items():
+            if keyword in channel:
+                for sub_keyword, sub_location in keyword_dict.items():
+                    if sub_keyword in channel:
+                        location = sub_location
+                        return location
+                if location:
+                        return location
+
+    if location is None:
+        log_print("Pop: Location not found in channel name.")
+        return

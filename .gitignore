@@ -7,3 +7,4 @@ modules
 ss.yaml
 backups/settings.yaml
 token
+settings/settings.yaml

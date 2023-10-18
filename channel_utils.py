@@ -6,7 +6,7 @@ from discord.ext import commands
 from datetime import datetime
 
 import config
-from string_utils import load_settings, calculate_time_diff, log_print
+from string_utils import load_settings, calculate_time_diff, log_print, format_window_heading
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -37,7 +37,8 @@ async def warn_ten(channel_name, category):
                     delay = dt - now
                     if delay.total_seconds() > 0:
                         await asyncio.sleep(delay.total_seconds())
-                    await channel.send(f"---------- Window opens in 10-Minutes x-in ----------")
+                    window_in_ten = await format_window_heading("Window opens in 10 Minutes x-in")
+                    await channel.send(window_in_ten)
                     await channel.send(ss['window_message'])
 
                     return
@@ -69,14 +70,16 @@ async def window_manager(channel_name, category, guild):
                         if time_diff % 600 == 0:
                             window = round(time_diff / 600) + 1
                             if "shi" in channel.name:
-                                await channel.send(f"------------ Shikigami Weapon has spawned ------------")
+                                shiki_spawn = await format_window_heading("Shikigami Weapon has spawned")
+                                await channel.send(shiki_spawn)
                                 poptask = asyncio.create_task(calculate_DKP(guild, channel, channel_name, dt, utc))
                                 poptask.set_name(f"pop-{channel_name}")
                                 task_name = poptask.get_name()
                                 log_print(f"Pop: Task for {task_name} has been started.")
                                 config.running_tasks.append(task_name)
                             else:
-                                await channel.send(f"------------------- Window {window} is now ------------------")
+                                window_count = await format_window_heading(f"Window {window} is now")
+                                await channel.send(window_count)
                                 await asyncio.sleep(5)
                         await asyncio.sleep(1)
                         time_diff = int(datetime.now().timestamp()) - unix_target
@@ -109,7 +112,8 @@ async def calculate_DKP(guild, channel, channel_name, dt, utc):
     await channel.send("Moving channel for dkp review in 5 minutes.")
     await asyncio.sleep(300)
     await channel.edit(category=dkp_review_category)
-    await channel.send("--------------------- DKP Review ---------------------")
+    dkp_review = await format_window_heading("DKP Review")
+    await channel.send(dkp_review)
 
     for task in existing_task:
         if task.get_name() == f"pop-{channel_name}" or task.get_name() == f"close-{channel_name}":

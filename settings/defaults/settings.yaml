@@ -1,12 +1,12 @@
 # Bot Token
-bot_token: bot token goes here
+bot_token: 
 
 # Discord ID's and Category Names
-guild: 1111122500038967316                  # Guild ID
-hnm_times: 1111122932379422877              # Channel ID where the camp times are posted for hyper-nms
-bnm_times: 1136107287942017076              # Channel ID where the camp times are posted for beastmen-nms
-bot_commands: 1111125170262900778           # Designated bot-commands channel for setting ToD's
-camp_pings: 1136710040120737823             # Channel where all pings will be directed
+guild:                   # Guild ID
+hnm_times:               # Channel ID: camp times are posted for hyper-nms
+bnm_times:               # Channel ID: camp times are posted for beastmen-nms
+bot_commands:            # Channel ID: Designated bot-commands channel for setting ToD's
+camp_pings:              # Channel ID: Channel where all pings will be directed
 dkp_review_category_name: DKP REVIEW        # dkp review category
 hnm_att_category_name: HNM ATTENDANCE       # hnm attendance category
 att_arch_category_name: ATTENDANCE ARCHIVE  # attendance archive category

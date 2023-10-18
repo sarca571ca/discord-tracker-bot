@@ -111,12 +111,28 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
 
     if unix_timestamp:
         if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"]:
-            await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            if original_hnm == "King Arthro":
+                await channel.send(f"- {original_hnm} 🦀: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "King Vinegarroon":
+                await channel.send(f"- {original_hnm} 🦂: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Shikigami Weapon":
+                await channel.send(f"- {original_hnm} 👹: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Simurgh":
+                await channel.send(f"- {original_hnm} 🐦: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            else:
+                await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         else:
             if int(day) >= 4: # Possible HQ or NQ day 4+
-                await channel.send(f"- {original_hnm}/{hq} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- **{original_hnm}/{hq}** 🚨 (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else: # NQ only
-                await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                if original_hnm == "Behemoth":
+                    await channel.send(f"- {original_hnm} :dog: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                elif original_hnm == "Adamantoise":
+                    await channel.send(f"- {original_hnm} :turtle: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                elif original_hnm == "Fafnir":
+                    await channel.send(f"- {original_hnm} :dragon_face: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                else:
+                    await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
     else:
         await channel.send(f"- {original_hnm}")
 

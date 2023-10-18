@@ -26,8 +26,10 @@ Channel Management
   - x's during a window will log the window and help determine the amount of windows camped
   - o's will remove players from future windows until another x is used
   - Grand Wyvrn system will be different and require an x every window
+- Need to make channel management for use with Grand Wyvrns so officer use the !open and !close commands in the channel and the appropriate headings happens ie ---- Window x: Time of Window ----
+- Add more functionality to the pop command for kings to account for pop location and who won the claim
 
-DKP System
+~~DKP System~~ - currently on hold as we handle dsp independent of this bot
 - Read's channel entries for x's and prints an report that can be copied right into the spreadsheet
 - any x after the report will be tracked seperately for review by an officer to determine its validity
 - Need to be able to update a yaml to save dkp values

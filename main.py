@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from discord.ext import commands, tasks
 
 import config
-from string_utils import ref, load_settings, calculate_time_diff, log_print
+from string_utils import ref, load_settings, calculate_time_diff, log_print, find_last_window, format_window_heading, find_hnm_location
 from channel_utils import calculate_DKP, close_manager, restart_channel_tasks
 from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels, handle_bnm_command
 
@@ -53,14 +53,14 @@ async def send_hour_warning_task():
                             message_sent = False
 
                             async for msg in camp_pings_channel.history(limit=None, oldest_first=False):
-                                if warning_msg == msg.content.replace("@everyone ", "", 1):
+                                if warning_msg == msg.content.replace("everyone ", "", 1):
                                     message_sent = True
                                     break
 
                             if not message_sent:
-                                await camp_pings_channel.send(f"@everyone {warning_msg}")
+                                await camp_pings_channel.send(f"everyone {warning_msg}")
                         else:
-                            await camp_pings_channel.send(f"@everyone {warning_msg}")
+                            await camp_pings_channel.send(f"everyone {warning_msg}")
             pass
     except discord.errors.DiscordServerError as e:
         if e.code == 0 and e.status == 503:
@@ -104,10 +104,7 @@ async def create_channel_task():
                     if day == None or int(day) <= 3:
                         channel_name = message.content[2:5].strip()
                     elif int(day) >= 4:
-                        nq = message.content[2:5].strip()
-                        hq_start = message.content.find("/") + 1
-                        hq_end = message.content.find("(")
-                        hq = message.content[hq_start:hq_end].strip()[:3]
+                        nq = message.content[4:7].strip()
                         channel_name = f"{nq}"
 
                 dt, utc = calculate_time_diff(message.content) # Extracts the utc timestamp
@@ -203,14 +200,32 @@ async def Behemoth(ctx, day: str = commands.parameter(default="Day", description
 Behemoth.brief = f"Used to set the ToD of Behemoth/King Behemoth."
 Behemoth.usage = "<day> <timestamp>"
 
+# @bot.command(aliases=["ka", "kinga"])
+# async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
+#                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+#                 ):
+#     hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+
+#     await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+# KingArthro.brief = f"Used to set the ToD of King Arthro."
+# KingArthro.usage = "<day> <timestamp>"
+
 @bot.command(aliases=["ka", "kinga"])
 async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    try:
+        hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+        await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    except commands.MissingRequiredArgument as e:
+        # Handle the "not enough arguments" error
+        await ctx.send(f"Error: {e}\nUsage: `{ctx.prefix}{ctx.command} {ctx.command.usage}`")
+    except Exception as e:
+        # Handle other exceptions if necessary
+        await ctx.send(f"An error occurred: {e}")
 
-    await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
-KingArthro.brief = f"Used to set the ToD of King Arthro."
+# Set the command's brief and usage
+KingArthro.brief = "Used to set the ToD of King Arthro."
 KingArthro.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["sim"])
@@ -315,7 +330,7 @@ async def sort(ctx): # Command used to sort the hnm-times
     await sort_hnm_times_channel(channel, bot.user)
 
 @bot.command(name='pop')
-async def pop(ctx):
+async def pop(ctx, location, linkshell):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
         dt, utc = calculate_time_diff(message.content)
 
@@ -336,15 +351,28 @@ async def pop(ctx):
             return
 
     await ctx.message.delete()
-    log_print(f"Pop: {ctx.author.display_name} issued !pop command.")
-    await ctx.channel.send(f"------------------------- POP ------------------------")
+    log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
+    
+    # Need to extract the last window
+    window = await find_last_window(ctx)
+
+    channel_name_lower = ctx.channel.name.lower()
+    if any(keyword in channel_name_lower for keyword in ["faf", "beh", "ada"]):
+        location =  find_hnm_location(channel_name_lower)
+        heading = await format_window_heading(f"POP: {window} | {location} | {linkshell}")
+    else:
+        heading = await format_window_heading("POP")
+    
+    await ctx.channel.send(heading)
+
     poptask = asyncio.create_task(calculate_DKP(ctx.guild, ctx.channel, ctx.channel.name, dt, utc))
     poptask.set_name(f"pop-{ctx.channel.name}")
     task_name = poptask.get_name()
     log_print(f"Pop: Task for {task_name} has been started.")
     config.running_tasks.append(task_name)
+
 pop.brief = f"Used when the NM has popped."
-pop.usage = ""
+pop.usage = "!pop <location> <linkshell>"
 
 @bot.command(name='close')
 async def close(ctx):
@@ -364,7 +392,8 @@ async def close(ctx):
 
     config.processed_channels_list.append(process_dict)
     await ctx.message.delete()
-    await ctx.send("----------------------- Closed -----------------------")
+    closed = await format_window_heading("Closed")
+    await ctx.send(closed)
     log_print(f"Close: {ctx.author.display_name} closed {ctx.channel.name}.")
     closetask = asyncio.create_task(close_manager(ctx.channel.name, ctx.channel.category, ctx.guild))
     closetask.set_name(f"close-{ctx.channel.name}")
@@ -398,7 +427,8 @@ async def open(ctx):
 
         config.processed_channels_list.remove(process_dict)
         await ctx.message.delete()
-        await ctx.send("---------------------- Open x-in ---------------------")
+        open_x = await format_window_heading("Open x-in")
+        await ctx.send(open_x)
         log_print(f"Open: {ctx.author.display_name} opened {ctx.channel.name}.")
         async for message in ctx.channel.history(limit=None, oldest_first=True):
             if message.content.startswith("- "):
