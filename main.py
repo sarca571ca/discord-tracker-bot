@@ -358,7 +358,7 @@ async def pop(ctx, location, linkshell):
 
     channel_name_lower = ctx.channel.name.lower()
     if any(keyword in channel_name_lower for keyword in ["faf", "beh", "ada"]):
-        location =  find_hnm_location(channel_name_lower)
+        location =  find_hnm_location(channel_name_lower, location)
         heading = await format_window_heading(f"POP: {window} | {location} | {linkshell}")
     else:
         heading = await format_window_heading("POP")

@@ -84,11 +84,11 @@ async def format_window_heading(word):
     
     return heading
 
-def find_hnm_location(channel):
+def find_hnm_location(channel, loc):
     for keyword, keyword_dict in config.location_tables.items():
             if keyword in channel:
                 for sub_keyword, sub_location in keyword_dict.items():
-                    if sub_keyword in channel:
+                    if sub_keyword in loc:
                         location = sub_location
                         return location
                 if location:
