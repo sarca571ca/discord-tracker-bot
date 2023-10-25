@@ -24,9 +24,11 @@ hnm_times =  ss['hnm_times']
 bot_commands = ss['bot_commands']
 camp_pings = ss['camp_pings']
 bot_id = ss['bot_token']
+vip_categpry_id = ss['vip_categpry_id']
 dkp_review_category_name = ss['dkp_review_category_name']
 hnm_att_category_name = ss['hnm_att_category_name']
 att_arch_category_name = ss['att_arch_category_name']
+dkp_processing_category_name = ss['dkp_processing_category_name']
 time_zone = pytz.timezone(ss['time_zone'])
 
 @tasks.loop(seconds=60)
@@ -53,14 +55,14 @@ async def send_hour_warning_task():
                             message_sent = False
 
                             async for msg in camp_pings_channel.history(limit=None, oldest_first=False):
-                                if warning_msg == msg.content.replace("everyone ", "", 1):
+                                if warning_msg == msg.content.replace("@everyone ", "", 1):
                                     message_sent = True
                                     break
 
                             if not message_sent:
-                                await camp_pings_channel.send(f"everyone {warning_msg}")
+                                await camp_pings_channel.send(f"@everyone {warning_msg}")
                         else:
-                            await camp_pings_channel.send(f"everyone {warning_msg}")
+                            await camp_pings_channel.send(f"@everyone {warning_msg}")
             pass
     except discord.errors.DiscordServerError as e:
         if e.code == 0 and e.status == 503:
@@ -297,7 +299,7 @@ async def OverlordBakgodek(ctx, day: str = commands.parameter(default="Day", des
     if ss['allow_bnm'] is not False:
         await handle_bnm_command(ctx, "Orcish Overlord", "Overlord Bakgodek", day, timestamp, bnm_channel, bot_channel, bot.user)
         
-OverlordBakgodek.brief = f"Used to set the ToD of Jormungand."
+OverlordBakgodek.brief = f"Used to set the ToD of Orcish Overlord/Overlord Bakgodek."
 OverlordBakgodek.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["quad", "adaman", "zadha"])
@@ -308,7 +310,7 @@ async def ZaDhaAdamantking(ctx, day: str = commands.parameter(default="Day", des
 
     if ss['allow_bnm'] is not False:
         await handle_bnm_command(ctx, "Diamond Quadav", "Za'Dha Adamantking", day, timestamp, bnm_channel, bot_channel, bot.user)
-ZaDhaAdamantking.brief = f"Used to set the ToD of Jormungand."
+ZaDhaAdamantking.brief = f"Used to set the ToD of Diamond Quadav/Za'Dha Adamantking."
 ZaDhaAdamantking.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["yag", "mani", "tzee"])
@@ -319,8 +321,24 @@ async def TzeeXicutheManifest(ctx, day: str = commands.parameter(default="Day", 
 
     if ss['allow_bnm'] is not False:
         await handle_bnm_command(ctx, "Yagudo Avatar", "Tzee Xicu the Manifest", day, timestamp, bnm_channel, bot_channel, bot.user)
-TzeeXicutheManifest.brief = f"Used to set the ToD of Jormungand."
+TzeeXicutheManifest.brief = f"Used to set the ToD of Yagudo Avatar/Tzee Xicu the Manifest."
 TzeeXicutheManifest.usage = "<day> <timestamp>"
+
+@bot.command()
+async def newchannel(ctx, permissions, category_name, channel_name):
+    # Find the category with the given ID
+    category = discord.utils.get(ctx.guild.categories, name=category_name)
+
+    if not category:
+        log_print("New Channel: Category not found!")
+        return
+
+    channel = await ctx.guild.create_text_channel(channel_name, category=category)
+    if permissions == 0:
+        await channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        await channel.set_permissions(ctx.guild.me, send_messages=True)
+
+    log_print(f"New Channel: Channel {channel.mention} created successfully!")
 
 @bot.command()
 async def sort(ctx): # Command used to sort the hnm-times
@@ -330,7 +348,7 @@ async def sort(ctx): # Command used to sort the hnm-times
     await sort_hnm_times_channel(channel, bot.user)
 
 @bot.command(name='pop')
-async def pop(ctx, location, linkshell):
+async def pop(ctx, location=None, linkshell=None):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
         dt, utc = calculate_time_diff(message.content)
 
@@ -357,8 +375,10 @@ async def pop(ctx, location, linkshell):
     window = await find_last_window(ctx)
 
     channel_name_lower = ctx.channel.name.lower()
+
     if any(keyword in channel_name_lower for keyword in ["faf", "beh", "ada"]):
-        location =  find_hnm_location(channel_name_lower, location)
+        location = find_hnm_location(channel_name_lower, location) if location else "Location Unknown"
+        linkshell = linkshell if linkshell else "Linkshell Unknown"
         heading = await format_window_heading(f"POP: {window} | {location} | {linkshell}")
     else:
         heading = await format_window_heading("POP")
@@ -372,7 +392,7 @@ async def pop(ctx, location, linkshell):
     config.running_tasks.append(task_name)
 
 pop.brief = f"Used when the NM has popped."
-pop.usage = "!pop <location> <linkshell>"
+pop.usage = "!pop [location] [linkshell]"
 
 @bot.command(name='close')
 async def close(ctx):
@@ -400,7 +420,7 @@ async def close(ctx):
     task_name = closetask.get_name()
     log_print(f"Close: Task for {task_name} has been started.")
     config.running_tasks.append(task_name)
-close.brief = f"Used to re-open closed channels."
+close.brief = f"Used to close channels."
 close.usage = ""
 
 @bot.command(name='open')
@@ -437,7 +457,7 @@ async def open(ctx):
                 unix_target = int(dt.timestamp())
                 time_diff = unix_now - unix_target
                 await restart_channel_tasks(ctx.guild, ctx.channel.name, ctx.channel.category, time_diff, ctx.channel)
-open.brief = f"Used to close channels."
+open.brief = f"Used to re-open closed channels."
 open.usage = ""
 
 
@@ -448,8 +468,8 @@ async def archive(ctx, option=None):
     category = ctx.channel.category
     archive_category = discord.utils.get(ctx.guild.categories, name=att_arch_category_name)
 
-    if not category or category.name != dkp_review_category_name:
-        await ctx.send("The command can only be used in the 'DKP REVIEW' category.")
+    if not category or category.name != dkp_processing_category_name:
+        await ctx.send(f"The command can only be used in the '{dkp_processing_category_name}' category.")
         return
 
     await archive_channels(archive_category, channel, category, option)

@@ -33,11 +33,11 @@ async def warn_ten(channel_name, category):
             if isinstance(channel, discord.TextChannel) and channel_name in channel.name and all(keyword not in channel.name for keyword in ss['ignore_channels']):
                 async for message in channel.history(limit=1, oldest_first=True):
                     dt, utc = calculate_time_diff(message.content)
-                    dt = datetime.fromtimestamp(utc - (10 * 60))
+                    dt = datetime.fromtimestamp(utc - (20 * 60))
                     delay = dt - now
                     if delay.total_seconds() > 0:
                         await asyncio.sleep(delay.total_seconds())
-                    window_in_ten = await format_window_heading("Window opens in 10 Minutes x-in")
+                    window_in_ten = await format_window_heading("Window opens in 20 Minutes x-in")
                     await channel.send(window_in_ten)
                     await channel.send(ss['window_message'])
 
@@ -77,8 +77,12 @@ async def window_manager(channel_name, category, guild):
                                 task_name = poptask.get_name()
                                 log_print(f"Pop: Task for {task_name} has been started.")
                                 config.running_tasks.append(task_name)
+                            elif ["faf", "beh", "ada"] in channel.name:
+                                window_count = await format_window_heading(f"Window {window} -- x{window + 1} below")
+                                await channel.send(window_count)
+                                await asyncio.sleep(5)
                             else:
-                                window_count = await format_window_heading(f"Window {window} is now")
+                                window_count = await format_window_heading(f"Window {window}")
                                 await channel.send(window_count)
                                 await asyncio.sleep(5)
                         await asyncio.sleep(1)
@@ -125,6 +129,17 @@ async def start_channel_tasks(guild, channel_name, category, utc, hnm_times_chan
     channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
     await channel.edit(position=hnm_times_channel.position + 1)
     await channel.send(f"{hnm_name}")
+    # Posts the maps for each King.
+    if "faf" in channel_name:
+        await channel.send("https://discord.com/channels/1071271557336399992/1096788736483799091/1096788840611582122")
+    elif "ada" in channel_name:
+        await channel.send("https://discord.com/channels/1071271557336399992/1096788329275596923/1096788446795800578")
+    elif "beh" in channel_name:
+        await channel.send("https://discord.com/channels/1071271557336399992/1096789032618438696/1096789035118231672")
+    elif "shi" in channel_name:
+        with open('images/shiki.png', 'rb') as f:
+            picture = discord.File(f)
+            await channel.send(file=picture)
     wttask = asyncio.create_task(warn_ten(channel_name, category))
     wttask.set_name(f"wt-{channel_name}")
     task_name = wttask.get_name()

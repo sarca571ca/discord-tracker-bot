@@ -1,8 +1,13 @@
+import discord
 import re
 import yaml
 from datetime import datetime
 import config
 
+from discord.ext import commands
+
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 def load_settings():
     with open('settings/settings.yaml', 'r') as f:
@@ -61,9 +66,23 @@ def calculate_time_diff(message_content):
     else:
         return None, None  # If no valid timestamp found, return None
 
+async def log_to_discord_channel(msg):
+    
+    ss = load_settings()
+    LOG_CHANNEL_ID = ss['log_channel_id']
+    channel = bot.get_channel(LOG_CHANNEL_ID)
+    if channel:  # Check if the channel exists and the bot can access it
+        await channel.send(msg)
+        
 def log_print(msg):
     timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S] [ALISE   ]")
-    print(f"{timestamp} {msg}")
+    log_message = f"{timestamp} {msg}"
+    print(log_message)
+
+    # As the log_to_discord_channel function is asynchronous, 
+    # you need to create a task to run it if you're not in an async context
+    # bot.loop.create_task(log_to_discord_channel(log_message))
+    # log_to_discord_channel(log_message)
 
 async def find_last_window(ctx):
     async for message in ctx.channel.history(limit=None, oldest_first=False):

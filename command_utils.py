@@ -105,7 +105,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
         return
 
     async for message in channel.history(limit=None):
-        if message.author == bot and message.content.startswith(f"- {original_hnm}"):
+        if message.author == bot and message.content.startswith(f"- {original_hnm}") or message.content.startswith(f"- **{original_hnm}"):
             await message.delete()
 
 
@@ -119,6 +119,10 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
                 await channel.send(f"- {original_hnm} 👹: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Simurgh":
                 await channel.send(f"- {original_hnm} 🐦: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Jormungand":
+                await channel.send(f"- {original_hnm} :ice_cube::chicken::ice_cube:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Tiamat":
+                await channel.send(f"- {original_hnm} :fire::chicken::fire:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else:
                 await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         else:
@@ -126,7 +130,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
                 await channel.send(f"- **{original_hnm}/{hq}** 🚨 (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else: # NQ only
                 if original_hnm == "Behemoth":
-                    await channel.send(f"- {original_hnm} :dog: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    await channel.send(f"- {original_hnm} :zap: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Adamantoise":
                     await channel.send(f"- {original_hnm} :turtle: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Fafnir":
