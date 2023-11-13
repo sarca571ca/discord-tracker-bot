@@ -292,8 +292,14 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                 else:
                     channel_name = f"{channel_name}1"
                     existing_channel = discord.utils.get(guild.channels, name=channel_name)
-                    if existing_channel:
-                        await restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
+                    if existing_channel:                    
+                        await asyncio.sleep(5)
+                        for task in asyncio.all_tasks():
+                            if task.get_name() == f"wm-{channel_name}":
+                                break
+                        else:
+                            if str(existing_channel.category) == hnm_att_category_name:
+                                await restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                     else:
                         await start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
             else:

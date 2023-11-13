@@ -77,10 +77,10 @@ async def window_manager(channel_name, category, guild):
                                 task_name = poptask.get_name()
                                 log_print(f"Pop: Task for {task_name} has been started.")
                                 config.running_tasks.append(task_name)
-                            elif ["faf", "beh", "ada"] in channel.name:
-                                window_count = await format_window_heading(f"Window {window} -- x{window + 1} below")
-                                await channel.send(window_count)
-                                await asyncio.sleep(5)
+                            # elif any(keyword in channel.name for keyword in ["faf", "beh", "ada"]):
+                            #     window_count = await format_window_heading(f"Window {window} -- x{window + 1} below")
+                            #     await channel.send(window_count)
+                            #     await asyncio.sleep(5)
                             else:
                                 window_count = await format_window_heading(f"Window {window}")
                                 await channel.send(window_count)
@@ -127,7 +127,9 @@ async def calculate_DKP(guild, channel, channel_name, dt, utc):
 
 async def start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name):
     channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
-    await channel.edit(position=hnm_times_channel.position + 1)
+    category_channels = category.text_channels
+    last_channel = category_channels[-1]
+    await channel.edit(position=last_channel.position + 1)
     await channel.send(f"{hnm_name}")
     # Posts the maps for each King.
     if "faf" in channel_name:

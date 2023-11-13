@@ -3,6 +3,7 @@ import re
 import yaml
 from datetime import datetime
 import config
+import asyncio
 
 from discord.ext import commands
 
@@ -85,10 +86,15 @@ def log_print(msg):
     # log_to_discord_channel(log_message)
 
 async def find_last_window(ctx):
+    window_pattern = await format_window_heading("Window (\d+)")
+    
+    # Constructing the regex pattern based on the expected format
+    regex_pattern = r'^-+ Window (\d+) -+$'
+    
     async for message in ctx.channel.history(limit=None, oldest_first=False):
-        match = re.search(r"------------------- Window (\d+) is now ------------------", message.content)
+        match = re.search(regex_pattern, message.content)
         if match:
-            window_number = match.group(1)  # Extract and convert the number to an integer
+            window_number = match.group(1)  # Extract the window number
             window = f"Window {window_number}"
             return window
 
@@ -103,16 +109,33 @@ async def format_window_heading(word):
     
     return heading
 
-def find_hnm_location(channel, loc):
+def find_hnm_location(ctx, channel, loc):
     for keyword, keyword_dict in config.location_tables.items():
-            if keyword in channel:
-                for sub_keyword, sub_location in keyword_dict.items():
-                    if sub_keyword in loc:
-                        location = sub_location
-                        return location
-                if location:
-                        return location
+        if keyword in channel:
+            for sub_keyword, sub_location in keyword_dict.items():
+                if sub_keyword in loc:
+                    return sub_location
 
-    if location is None:
-        log_print("Pop: Location not found in channel name.")
-        return
+    # If we reach here, no location was found
+    log_print("Pop: Location not found in channel name.")
+
+    # Send the DM with the available locations
+    available_locations_key = []
+    available_locations_value = []
+    for keyword, keyword_dict in config.location_tables.items():
+        if keyword in channel:
+            available_locations_key.extend(list(keyword_dict.keys()))
+    
+    for keyword, keyword_dict in config.location_tables.items():
+        if keyword in channel:
+            available_locations_value.extend(list(keyword_dict.values()))
+
+    if available_locations_key and available_locations_value:
+        combined = [f"{value} - {key}" for key, value in zip(available_locations_key, available_locations_value)]
+        combined_str = "\n".join(combined)
+        available_value = "\n".join(available_locations_value)
+        dm_msg = (f"Invalid location argument provided. "
+                  f"Here are the available locations for {channel}:\n{combined_str}")
+        asyncio.create_task(ctx.author.send(dm_msg))
+
+    return None

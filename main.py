@@ -3,6 +3,7 @@ import time
 import asyncio
 import pytz
 import asyncio
+import subprocess
 
 from datetime import datetime, timezone
 from discord.ext import commands, tasks
@@ -110,7 +111,8 @@ async def create_channel_task():
                         channel_name = f"{nq}"
 
                 dt, utc = calculate_time_diff(message.content) # Extracts the utc timestamp
-                date = dt.strftime("%b%d").lower()
+                dt_pst = dt.astimezone(time_zone)
+                date = dt_pst.strftime("%b%d").lower()
                 hnm = channel_name.upper()
                 hnm_name = message.content.replace("- ", "", 1)
                 unix_now = int(datetime.now().timestamp())
@@ -325,6 +327,15 @@ TzeeXicutheManifest.brief = f"Used to set the ToD of Yagudo Avatar/Tzee Xicu the
 TzeeXicutheManifest.usage = "<day> <timestamp>"
 
 @bot.command()
+async def restart(ctx):
+    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    try:
+        output = subprocess.check_output(["/bin/bash", "./restart.sh"])
+        log_print(f"Script executed successfully: \n{output.decode('utf-8')}")
+    except subprocess.CalledProcessError as e:
+        log_print(f"An error occurred: \n{e.output.decode('utf-8')}")
+
+@bot.command()
 async def newchannel(ctx, permissions, category_name, channel_name):
     # Find the category with the given ID
     category = discord.utils.get(ctx.guild.categories, name=category_name)
@@ -348,7 +359,12 @@ async def sort(ctx): # Command used to sort the hnm-times
     await sort_hnm_times_channel(channel, bot.user)
 
 @bot.command(name='pop')
-async def pop(ctx, location=None, linkshell=None):
+async def pop(ctx, location=None, *linkshell):
+    if linkshell:  # Check if linkshell is not empty
+        linkshell = ' '.join(linkshell)
+    else:
+        linkshell = None
+    
     async for message in ctx.channel.history(limit=1, oldest_first=True):
         dt, utc = calculate_time_diff(message.content)
 
@@ -375,16 +391,24 @@ async def pop(ctx, location=None, linkshell=None):
     window = await find_last_window(ctx)
 
     channel_name_lower = ctx.channel.name.lower()
-
+    
     if any(keyword in channel_name_lower for keyword in ["faf", "beh", "ada"]):
-        location = find_hnm_location(channel_name_lower, location) if location else "Location Unknown"
+        if location is None:
+            heading = await format_window_heading("POP")
+
+        location = find_hnm_location(ctx, channel_name_lower, location.lower())
+
+        # If the location is incorrect, return from the command after sending DM to the user
+        if location is None:
+            return
+
         linkshell = linkshell if linkshell else "Linkshell Unknown"
         heading = await format_window_heading(f"POP: {window} | {location} | {linkshell}")
     else:
         heading = await format_window_heading("POP")
-    
-    await ctx.channel.send(heading)
 
+    await ctx.channel.send(heading)
+    
     poptask = asyncio.create_task(calculate_DKP(ctx.guild, ctx.channel, ctx.channel.name, dt, utc))
     poptask.set_name(f"pop-{ctx.channel.name}")
     task_name = poptask.get_name()
