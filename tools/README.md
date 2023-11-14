@@ -3,37 +3,20 @@ Simple bot that calculates DKP based on user input.....hopefully
 ## ToDo
 
 ToD Managment
-- Uses commands to set individual ToD's for DKP mobs
-    - ~~Ground Kings - HQ System 22hr respawn 7 windows every 10 mins~~ done
-    - HQ sytem for Ground Kings needs to be implemented
-    - ~~KA - 21hr respawn 7 windows every 10 minutes?~~ - done
-    - ~~KV - 21hr respawn spawns only during earth weather~~ - done
-    - ~~Shiki - 21hr respawn exactly~~ - done
-    - Grand Wyvrn - 84hr respawn 25 windows every 1hrs
-        - Needs a specialized tracking system implemented
-- Commands need to be more robust to handle various time/date formats
-- Days currently have to be manually inputed
-  - Need to be able to ignore the day entry or independtly update it
+- Grand Wyvrn - 84hr respawn 25 windows every 1hrs
+  - Needs a specialized tracking system implemented
 
 Channel Management
-- ~~Creates channels 10 minutes prior to 1st window~~ - done
-- ~~Moves the channels 4 hours after 1st window~~ - done
-- Change the channel move 4 hours from 1st window to last window
-  - This will allow the system to be compaitable with any dkp mobs that have special reqs on spawns
-  - might cause issues with KV
-- King Ving will need special reqs to open a window im not to sure tbh
-- Insert window notification when a window open in the correct channel
-  - x's during a window will log the window and help determine the amount of windows camped
-  - o's will remove players from future windows until another x is used
-  - Grand Wyvrn system will be different and require an x every window
 - Need to make channel management for use with Grand Wyvrns so officer use the !open and !close commands in the channel and the appropriate headings happens ie ---- Window x: Time of Window ----
-- Add more functionality to the pop command for kings to account for pop location and who won the claim
 
-~~DKP System~~ - currently on hold as we handle dsp independent of this bot
-- Read's channel entries for x's and prints an report that can be copied right into the spreadsheet
-- any x after the report will be tracked seperately for review by an officer to determine its validity
-- Need to be able to update a yaml to save dkp values
-- Should we do away with the spreadsheet altogether?
-- We can initially set everyones current values in a csv and save that as the start point
+DKP System 
+- currently on hold as we handle dkp independent of this bot
+
+Refactoring
+- Need to make more functions for things that are repeated a lot through the code
+- Clean up the code and reorganize the sturcture some.
+- Change the proccess_hnm_window() to look in the channel.topic instead of message.content for timestamps
+  - This will fix errors with manually created channels as the bot can always change to topic but not the first comment.
+  - This will enable to bot to retroactively fix incorrectly inputed timestamps also.
 
 ![Image](./images/workflow.png)
