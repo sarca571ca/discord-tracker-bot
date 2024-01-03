@@ -246,13 +246,21 @@ async def sort_hnm_times_channel(channel, bot):
     for message in messages:
         content = message.content
         await message.delete()
-        await channel.send(content)
+        dt, utc = calculate_time_diff(content)
+        unix_now = int(datetime.now().timestamp())
+        unix_target = int(dt.timestamp())
+        time_diff = unix_now - unix_target
+        if any(keyword in message.content for keyword in ['Jormungand', 'Tiamat', 'Vrtra']) and time_diff > 86400 * 3:
+            continue
+        elif not any(keyword in message.content for keyword in ['Jormungand', 'Tiamat', 'Vrtra']) and time_diff > 86400:
+            continue
+        else:
+            await channel.send(content)
 
 def get_channels(bot, ctx):
     allowed_channel_id = bot_commands
     author = ctx.author
     hnm_channel_id = hnm_times
-    bnm_channel_id = bnm_times
 
     if ctx.channel.id != allowed_channel_id:
         asyncio.create_task(author.send("This command can only be used in the specified channel."))
@@ -260,14 +268,14 @@ def get_channels(bot, ctx):
         return None, None
 
     hnm_channel = bot.get_channel(hnm_channel_id)
-    bnm_channel = bot.get_channel(bnm_channel_id)
     bot_channel = bot.get_channel(bot_commands)
 
-    return hnm_channel, bnm_channel, bot_channel
+    return hnm_channel, bot_channel
 
 async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                              day, message, guild, category, utc, hnm_times_channel,
                              hnm_name, time_diff):
+    hnm_category = discord.utils.get(guild.categories, id=hnm_att_category_name)
     if hnm_window_end >= target_time:
         if hnm_time <= target_time:
             if any(keyword in message.content for keyword in ["Fafnir", "Adamantoise", "Behemoth"]):
@@ -279,15 +287,15 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
             if existing_channel:
                 async for message in existing_channel.history(limit=1, oldest_first=True):
                     channel_dt, channel_utc = calculate_time_diff(message.content)
-                if channel_utc == utc and str(category) != hnm_att_category_name:
+                if channel_utc == utc and category != hnm_category:
                     return
-                elif channel_utc == utc and str(category) == hnm_att_category_name:
+                elif channel_utc == utc and category == hnm_category:
                     await asyncio.sleep(5)
                     for task in asyncio.all_tasks():
                         if task.get_name() == f"wm-{channel_name}":
                             break
                     else:
-                        if str(existing_channel.category) == hnm_att_category_name:
+                        if existing_channel.category == hnm_category:
                             await restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                 else:
                     channel_name = f"{channel_name}1"
@@ -298,7 +306,7 @@ async def process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                             if task.get_name() == f"wm-{channel_name}":
                                 break
                         else:
-                            if str(existing_channel.category) == hnm_att_category_name:
+                            if str(existing_channel.category_id) == hnm_category:
                                 await restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                     else:
                         await start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)

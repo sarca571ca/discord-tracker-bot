@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 from discord.ext import commands, tasks
 
 import config
-from string_utils import ref, load_settings, calculate_time_diff, log_print, find_last_window, format_window_heading, find_hnm_location
+from string_utils import ref, load_settings, calculate_time_diff, log_print, find_last_window, format_window_heading
 from channel_utils import calculate_DKP, close_manager, restart_channel_tasks
-from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels, handle_bnm_command
+from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels
 
 intents = discord.Intents.all()
 
@@ -78,11 +78,11 @@ async def send_hour_warning_task():
 @tasks.loop(seconds=60)
 async def create_channel_task():
     guild = bot.get_guild(guild_id)
-    category = discord.utils.get(guild.categories, name=hnm_att_category_name)
+    category = discord.utils.get(guild.categories, id=hnm_att_category_name)
     hnm_times_channel = bot.get_channel(hnm_times)
 
     if not category:
-        category = await guild.create_category(hnm_att_category_name)
+        log_print("Catergory either not set properly in settings or doesn't exist.")
 
     now = int(time.time())
     target_time = datetime.fromtimestamp(now)
@@ -98,17 +98,31 @@ async def create_channel_task():
                     day = ref(raw_day)
                 else:
                     day = None
-
-                if any(keyword in message.content for keyword in ss['ignore_create_channels']):
-                    continue
-                elif "King Arthro" in message.content:
-                    channel_name = "ka"
+                
+                if ss['ignore_create_channels']:
+                    if any(keyword in message.content for keyword in ss['ignore_create_channels']):
+                        continue
+                    elif "King Arthro" in message.content:
+                        channel_name = "ka"
+                    elif "King Vinegarroon" in message.content:
+                        channel_name = "kv"
+                    else:
+                        if day == None or int(day) <= 3:
+                            channel_name = message.content[2:5].strip()
+                        elif int(day) >= 4:
+                            nq = message.content[4:7].strip()
+                            channel_name = f"{nq}"
                 else:
-                    if day == None or int(day) <= 3:
-                        channel_name = message.content[2:5].strip()
-                    elif int(day) >= 4:
-                        nq = message.content[4:7].strip()
-                        channel_name = f"{nq}"
+                    if "King Arthro" in message.content:
+                        channel_name = "ka"
+                    elif "King Vinegarroon" in message.content:
+                        channel_name = "kv"
+                    else:
+                        if day == None or int(day) <= 3:
+                            channel_name = message.content[2:5].strip()
+                        elif int(day) >= 4:
+                            nq = message.content[4:7].strip()
+                            channel_name = f"{nq}"
 
                 dt, utc = calculate_time_diff(message.content) # Extracts the utc timestamp
                 dt_pst = dt.astimezone(time_zone)
@@ -120,7 +134,10 @@ async def create_channel_task():
                 time_diff = unix_now - unix_target
 
                 hnm_time = datetime.fromtimestamp(utc - (ss['make_channel'] * 60))
-                hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600))
+                if any(keyword in channel_name.lower() for keyword in ["jor", "vrt", "tia"]):
+                    hnm_window_end = datetime.fromtimestamp(utc + (24 * 3600)) # 24 hours for GW
+                else:
+                    hnm_window_end = datetime.fromtimestamp(utc + (1 * 3600)) # 1 hour for everything else
 
                 await process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                                          day, message, guild, category, utc, hnm_times_channel,
@@ -134,6 +151,7 @@ async def create_channel_task():
         else:
             log_print(f"DiscordServerError: {e}")
     except Exception as e:
+        log_print("Create Channel Task")
         log_print(f"Error: {e}")
 
 
@@ -164,9 +182,7 @@ async def on_ready():
     create_channel_task.start()
     delete_old_channels.start()
     send_hour_warning_task.start()
-    # with open('images/logo.png', 'rb') as avatar_file:
-    #     avatar = avatar_file.read()
-    #     await bot.user.edit(avatar=avatar)
+
     guild = bot.get_guild(guild_id)
     member = guild.get_member(bot.user.id)
     if member:
@@ -178,7 +194,7 @@ async def on_ready():
 async def Fafnir(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp, hnm_channel, bot_channel, bot.user)
 Fafnir.brief = f"Used to set the ToD of Fafnir/Nidhogg."
@@ -188,7 +204,7 @@ Fafnir.usage = "<day> <timestamp>"
 async def Adamantoise(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp, hnm_channel, bot_channel, bot.user)
 Adamantoise.brief = f"Used to set the ToD of Adamantoise/Aspidochelone."
@@ -198,37 +214,24 @@ Adamantoise.usage = "<day> <timestamp>"
 async def Behemoth(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp, hnm_channel, bot_channel, bot.user)
 Behemoth.brief = f"Used to set the ToD of Behemoth/King Behemoth."
 Behemoth.usage = "<day> <timestamp>"
-
-# @bot.command(aliases=["ka", "kinga"])
-# async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
-#                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
-#                 ):
-#     hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
-
-#     await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
-# KingArthro.brief = f"Used to set the ToD of King Arthro."
-# KingArthro.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["ka", "kinga"])
 async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
     try:
-        hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+        hnm_channel, bot_channel = get_channels(bot, ctx)
         await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
     except commands.MissingRequiredArgument as e:
-        # Handle the "not enough arguments" error
         await ctx.send(f"Error: {e}\nUsage: `{ctx.prefix}{ctx.command} {ctx.command.usage}`")
     except Exception as e:
-        # Handle other exceptions if necessary
         await ctx.send(f"An error occurred: {e}")
 
-# Set the command's brief and usage
 KingArthro.brief = "Used to set the ToD of King Arthro."
 KingArthro.usage = "<day> <timestamp>"
 
@@ -236,7 +239,7 @@ KingArthro.usage = "<day> <timestamp>"
 async def Simurgh(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Simurgh", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Simurgh.brief = f"Used to set the ToD of Simurgh."
@@ -246,7 +249,7 @@ Simurgh.usage = "<day> <timestamp>"
 async def ShikigamiWeapon(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 ShikigamiWeapon.brief = f"Used to set the ToD of Shikigami Weapon."
@@ -256,7 +259,7 @@ ShikigamiWeapon.usage = "<day> <timestamp>"
 async def KingVinegarroon(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 KingVinegarroon.brief = f"Used to set the ToD of King Vinegarroon."
@@ -266,7 +269,7 @@ KingVinegarroon.usage = "<day> <timestamp>"
 async def Vrtra(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Vrtra", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Vrtra.brief = f"Used to set the ToD of Vrtra."
@@ -276,7 +279,7 @@ Vrtra.usage = "<day> <timestamp>"
 async def Tiamat(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Tiamat", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Tiamat.brief = f"Used to set the ToD of Tiamat."
@@ -286,81 +289,22 @@ Tiamat.usage = "<day> <timestamp>"
 async def Jormungand(ctx, day: str = commands.parameter(default="Day", description=config.day),
                 *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
                 ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
+    hnm_channel, bot_channel = get_channels(bot, ctx)
 
     await handle_hnm_command(ctx, "Jormungand", None, day, timestamp, hnm_channel, bot_channel, bot.user)
 Jormungand.brief = f"Used to set the ToD of Jormungand."
 Jormungand.usage = "<day> <timestamp>"
 
-@bot.command(aliases=["orc", "overlord", "bag"])
-async def OverlordBakgodek(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
-                ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
-
-    if ss['allow_bnm'] is not False:
-        await handle_bnm_command(ctx, "Orcish Overlord", "Overlord Bakgodek", day, timestamp, bnm_channel, bot_channel, bot.user)
-        
-OverlordBakgodek.brief = f"Used to set the ToD of Orcish Overlord/Overlord Bakgodek."
-OverlordBakgodek.usage = "<day> <timestamp>"
-
-@bot.command(aliases=["quad", "adaman", "zadha"])
-async def ZaDhaAdamantking(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
-                ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
-
-    if ss['allow_bnm'] is not False:
-        await handle_bnm_command(ctx, "Diamond Quadav", "Za'Dha Adamantking", day, timestamp, bnm_channel, bot_channel, bot.user)
-ZaDhaAdamantking.brief = f"Used to set the ToD of Diamond Quadav/Za'Dha Adamantking."
-ZaDhaAdamantking.usage = "<day> <timestamp>"
-
-@bot.command(aliases=["yag", "mani", "tzee"])
-async def TzeeXicutheManifest(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
-                ):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
-
-    if ss['allow_bnm'] is not False:
-        await handle_bnm_command(ctx, "Yagudo Avatar", "Tzee Xicu the Manifest", day, timestamp, bnm_channel, bot_channel, bot.user)
-TzeeXicutheManifest.brief = f"Used to set the ToD of Yagudo Avatar/Tzee Xicu the Manifest."
-TzeeXicutheManifest.usage = "<day> <timestamp>"
-
 @bot.command()
-async def restart(ctx):
-    hnm_channel, bnm_channel, bot_channel = get_channels(bot, ctx)
-    try:
-        output = subprocess.check_output(["/bin/bash", "./restart.sh"])
-        log_print(f"Script executed successfully: \n{output.decode('utf-8')}")
-    except subprocess.CalledProcessError as e:
-        log_print(f"An error occurred: \n{e.output.decode('utf-8')}")
-
-@bot.command()
-async def newchannel(ctx, permissions, category_name, channel_name):
-    # Find the category with the given ID
-    category = discord.utils.get(ctx.guild.categories, name=category_name)
-
-    if not category:
-        log_print("New Channel: Category not found!")
-        return
-
-    channel = await ctx.guild.create_text_channel(channel_name, category=category)
-    if permissions == 0:
-        await channel.set_permissions(ctx.guild.default_role, send_messages=False)
-        await channel.set_permissions(ctx.guild.me, send_messages=True)
-
-    log_print(f"New Channel: Channel {channel.mention} created successfully!")
-
-@bot.command()
-async def sort(ctx): # Command used to sort the hnm-times
+async def sort(ctx):
     channel_id = hnm_times
     channel = bot.get_channel(channel_id)
 
     await sort_hnm_times_channel(channel, bot.user)
 
-@bot.command(name='pop')
-async def pop(ctx, location=None, *linkshell):
-    if linkshell:  # Check if linkshell is not empty
+@bot.command(name='pop') # Used once the hnm pops
+async def pop(ctx, *linkshell):
+    if linkshell:
         linkshell = ' '.join(linkshell)
     else:
         linkshell = None
@@ -372,8 +316,8 @@ async def pop(ctx, location=None, *linkshell):
         log_print(f"Pop: Channel {ctx.channel.name} is not a text channel. Ignoring.")
         return
 
-    if not ctx.channel.category or ctx.channel.category.name != hnm_att_category_name:
-        log_print(f"Pop: Channel {ctx.channel.name} is not in {hnm_att_category_name} category. Ignoring.")
+    if not ctx.channel.category or ctx.channel.category_id != hnm_att_category_name:
+        log_print(f"Pop: Channel {ctx.channel.name} is not in HNM Attendance category. Ignoring.")
         return
 
     if ctx.author.bot:
@@ -387,23 +331,13 @@ async def pop(ctx, location=None, *linkshell):
     await ctx.message.delete()
     log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
     
-    # Need to extract the last window
     window = await find_last_window(ctx)
 
     channel_name_lower = ctx.channel.name.lower()
     
     if any(keyword in channel_name_lower for keyword in ["faf", "beh", "ada"]):
-        if location is None:
-            heading = await format_window_heading("POP")
-
-        location = find_hnm_location(ctx, channel_name_lower, location.lower())
-
-        # If the location is incorrect, return from the command after sending DM to the user
-        if location is None:
-            return
-
         linkshell = linkshell if linkshell else "Linkshell Unknown"
-        heading = await format_window_heading(f"POP: {window} | {location} | {linkshell}")
+        heading = await format_window_heading(f"POP: {window} | {linkshell}")
     else:
         heading = await format_window_heading("POP")
 
@@ -416,9 +350,9 @@ async def pop(ctx, location=None, *linkshell):
     config.running_tasks.append(task_name)
 
 pop.brief = f"Used when the NM has popped."
-pop.usage = "!pop [location] [linkshell]"
+pop.usage = "!pop [linkshell]"
 
-@bot.command(name='close')
+@bot.command(name='close') # Used to close open camps
 async def close(ctx):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
         dt, utc = calculate_time_diff(message.content)
@@ -447,7 +381,7 @@ async def close(ctx):
 close.brief = f"Used to close channels."
 close.usage = ""
 
-@bot.command(name='open')
+@bot.command(name='open') # Used to open closed camps
 async def open(ctx):
     async for message in ctx.channel.history(limit=1, oldest_first=True):
         dt, utc = calculate_time_diff(message.content)
@@ -484,8 +418,6 @@ async def open(ctx):
 open.brief = f"Used to re-open closed channels."
 open.usage = ""
 
-
-
 @bot.command() # Archive command used for moving channels from DKP Review Category
 async def archive(ctx, option=None):
     channel = ctx.channel
@@ -497,5 +429,66 @@ async def archive(ctx, option=None):
         return
 
     await archive_channels(archive_category, channel, category, option)
+
+# Debugging commands used for testing. Should add in a auto-populate hnm-times command.
+
+@bot.command() # Restarts the bot from discord.
+async def restart(ctx):
+    try:
+        output = subprocess.check_output(["/bin/bash", "./restart.sh"])
+        log_print(f"Script executed successfully: \n{output.decode('utf-8')}")
+    except subprocess.CalledProcessError as e:
+        log_print(f"An error occurred: \n{e.output.decode('utf-8')}")
+
+# @bot.command()
+# async def newchannel(ctx, permissions, category_name, channel_name):
+#     category = discord.utils.get(ctx.guild.categories, name=category_name)
+
+#     if not category:
+#         log_print("New Channel: Category not found!")
+#         return
+
+#     channel = await ctx.guild.create_text_channel(channel_name, category=category)
+#     if permissions == 0:
+#         await channel.set_permissions(ctx.guild.default_role, send_messages=False)
+#         await channel.set_permissions(ctx.guild.me, send_messages=True)
+
+#     log_print(f"New Channel: Channel {channel.mention} created successfully!")
+    
+# @bot.command(name='sm', help='Sends a message to the channel where the command was used')
+# async def send_message(ctx, *, message):
+#     await ctx.send(message)
+
+@bot.command(name='p', help='Prints all processed channels')
+async def processed_list(ctx):
+    processed = config.processed_channels_list
+    log_print("Processed Channels")
+    for line in processed:
+        log_print(line)
+
+@bot.command(name='r', help='Prints all processed channels')
+async def running_tasks(ctx):
+    running = asyncio.all_tasks()
+    log_print("Running Tasks")
+    for line in running:
+        log_print(line)
+
+# @bot.command()
+# async def debug(ctx):
+    # now = int(time.time())
+    # target_time = datetime.fromtimestamp(now)
+    # pst = 8*3600 # Quick fix im sure i can apply some TZ shit but idgaf
+    # log_print("Creating debugging channels")
+    # hnm_channel, bot_channel = get_channels(bot, ctx)
+    # await handle_hnm_command(ctx, "Fafnir", "Nidhogg", 3, str(datetime.fromtimestamp(now + (2 * 3600) + 90 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", 4, str(datetime.fromtimestamp(now + (2 * 3600) - 2400 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Behemoth", "King Behemoth", 5, str(datetime.fromtimestamp(now + (2 * 3600) - 1200 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "King Arthro", None, 0, str(datetime.fromtimestamp(now + (2 * 3600) + 90 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Simurgh", None, 0, str(datetime.fromtimestamp(now + (2 * 3600) + 90 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Shikigami Weapon", None, 0, str(datetime.fromtimestamp(now + (3 * 3600) + 90 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "King Vinegarroon", None, 0, str(datetime.fromtimestamp(now + (3 * 3600) + 90 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Vrtra", None, 0, str(datetime.fromtimestamp(now - (84 * 3600) + 430 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Tiamat", None, 0, str(datetime.fromtimestamp(now - (84 * 3600) - ((24 * 3600) / 2) + 430 - pst)), hnm_channel, bot_channel, bot.user)
+    # await handle_hnm_command(ctx, "Jormungand", None, 0, str(datetime.fromtimestamp(now - (84 * 3600) - (24 * 3600) + 430 - pst)), hnm_channel, bot_channel, bot.user)
 
 bot.run(bot_id)

@@ -1,5 +1,5 @@
 # Configuration file
-
+kv_open = []
 processed_channels_list = []
 running_tasks = []
 
