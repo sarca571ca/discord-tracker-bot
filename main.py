@@ -430,6 +430,32 @@ async def archive(ctx, option=None):
 
     await archive_channels(archive_category, channel, category, option)
 
+@bot.command(name='sort_channels', help='Sort channels in a category from newest to oldest.')
+async def sort_channels(ctx):
+    # Check if the command is invoked in the allowed channel
+    if ctx.channel.id != bot_commands:
+        return
+
+    # Get the guild
+    guild = ctx.guild
+
+    # Find the category by name
+    category = discord.utils.get(guild.categories, name=dkp_review_category_name)
+
+
+    # Sort the channels in the category by creation time
+    sorted_channels = sorted(category.channels, key=lambda c: c.created_at)
+
+    # Reorder the channels from newest to oldest
+    sorted_channels.reverse()
+    log_print(f"Sort Channels: {ctx.author.display_name} issued !sort_channels.")
+    # Move the channels to the correct positions
+    for index, channel in enumerate(sorted_channels):
+        await channel.edit(position=index)
+        await asyncio.sleep(2)
+
+    log_print(f"Sort Channels: Complete.")
+
 # Debugging commands used for testing. Should add in a auto-populate hnm-times command.
 
 @bot.command() # Restarts the bot from discord.

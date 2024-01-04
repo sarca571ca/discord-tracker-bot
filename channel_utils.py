@@ -97,7 +97,7 @@ async def window_manager(channel_name, category, guild):
                         window = round(time_diff / 3600) + 1
                         first_window = await format_window_heading(f"Window {window} in 5-Minutes x-in")
                         await channel.send(first_window)
-                        # await asyncio.sleep(5)
+                        await channel.send("```Remember a proper hold party is required for DKP \nAll x-in's should be x-job, eg. x-blm```")
                         gw_time = int(datetime.now().timestamp()) - unix_target
 
                     if any(keyword in channel.name for keyword in ["jor", "vrt", "tia"]):
@@ -108,7 +108,7 @@ async def window_manager(channel_name, category, guild):
                             if window_open % 3600 == 0:                                
                                 window_number_open = await format_window_heading(f"Window {window} in 5-Minutes x-in")
                                 await channel.send(window_number_open)
-
+                                await channel.send("```Remember a proper hold party is required for DKP \nAll x-in's should be x-job, eg. x-blm```")
                             if window_close % 3600 == 0:
                                 window_number_close = await format_window_heading(f"Window {window} closed no more x-in")
                                 await channel.send(window_number_close)
