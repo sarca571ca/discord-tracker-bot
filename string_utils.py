@@ -139,3 +139,17 @@ def find_hnm_location(ctx, channel, loc):
         asyncio.create_task(ctx.author.send(dm_msg))
 
     return None
+
+def sort_hnm_args(day, mod, timestamp):
+    if mod is None and timestamp is None:
+        timestamp = str(day)
+        day = 0
+    elif timestamp is None:
+        if mod != ['n', 'a', 'd', 't'] and day != ['n', 'a', 'd', 't']:
+            timestamp = mod
+            mod = 'n'
+        else:
+            timestamp = mod
+            mod = day
+            day = 0
+    return day, mod, timestamp

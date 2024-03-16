@@ -20,7 +20,7 @@ hnm_att_category_name = ss['hnm_att_category_name']
 att_arch_category_name = ss['att_arch_category_name']
 time_zone = pytz.timezone(ss['time_zone'])
 
-async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_channel, bot):
+async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channel, bot_channel, bot):
     original_hnm = hnm  # Store the original HNM name
 
     if hnm in ["Fafnir", "Adamantoise", "Behemoth"]:
@@ -110,7 +110,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
 
 
     if unix_timestamp:
-        if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"]:
+        if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"] and mod == 'n':
             if original_hnm == "King Arthro":
                 await channel.send(f"- {original_hnm} 🦀: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "King Vinegarroon":
@@ -125,16 +125,56 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, timestamp, channel, bot_cha
                 await channel.send(f"- {original_hnm} :fire::chicken::fire:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else:
                 await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+        elif original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"] and mod == 'a':
+            if original_hnm == "King Arthro":
+                await channel.send(f"- {original_hnm} :grey_question:🦀:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "King Vinegarroon":
+                await channel.send(f"- {original_hnm} :grey_question:🦂:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Shikigami Weapon":
+                await channel.send(f"- {original_hnm} :grey_question:👹:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Simurgh":
+                await channel.send(f"- {original_hnm} :grey_question:🐦:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Jormungand":
+                await channel.send(f"- {original_hnm} :grey_question::ice_cube::chicken::ice_cube::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif original_hnm == "Tiamat":
+                await channel.send(f"- {original_hnm} :grey_question::fire::chicken::fire::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            else:
+                await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         else:
-            if int(day) >= 4: # Possible HQ or NQ day 4+
+            if int(day) >= 4 and mod == "n": # Possible HQ or NQ day 4+
                 await channel.send(f"- **{original_hnm}/{hq}** 🚨 (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif int(day) >= 4 and mod == "d":
+                await channel.send(f"- **{original_hnm}/{hq}** :moneybag:🚨:moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+            elif int(day) >= 4 and mod == "t":
+                await channel.send(f"- **{original_hnm}/{hq}** :moneybag::moneybag:🚨:moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             else: # NQ only
                 if original_hnm == "Behemoth":
-                    await channel.send(f"- {original_hnm} :zap: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    if mod == "a":
+                        await channel.send(f"- {original_hnm} :grey_question::zap::grey_question: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "d":
+                        await channel.send(f"- {original_hnm} :moneybag::zap::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "t":
+                        await channel.send(f"- {original_hnm} :moneybag::moneybag::zap::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    else:
+                        await channel.send(f"- {original_hnm} :zap: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Adamantoise":
-                    await channel.send(f"- {original_hnm} :turtle: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    if mod == "a":
+                        await channel.send(f"- {original_hnm} :grey_question::turtle::grey_question: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "d":
+                        await channel.send(f"- {original_hnm} :moneybag::turtle::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "t":
+                        await channel.send(f"- {original_hnm} :moneybag::moneybag::turtle::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    else:
+                        await channel.send(f"- {original_hnm} :turtle: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Fafnir":
-                    await channel.send(f"- {original_hnm} :dragon_face: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    if mod == "a":
+                        await channel.send(f"- {original_hnm} :grey_question::dragon_face::grey_question: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "d":
+                        await channel.send(f"- {original_hnm} :moneybag::dragon_face::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    elif mod == "t":
+                        await channel.send(f"- {original_hnm} :moneybag::moneybag::dragon_face::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                    else:
+                        await channel.send(f"- {original_hnm} :dragon_face: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 else:
                     await channel.send(f"- {original_hnm} (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
     else:

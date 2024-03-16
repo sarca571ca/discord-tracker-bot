@@ -4,12 +4,13 @@ import asyncio
 import pytz
 import asyncio
 import subprocess
+import typing
 
 from datetime import datetime, timezone
 from discord.ext import commands, tasks
 
 import config
-from string_utils import ref, load_settings, calculate_time_diff, log_print, find_last_window, format_window_heading
+from string_utils import ref, load_settings, calculate_time_diff, log_print, find_last_window, format_window_heading, sort_hnm_args
 from channel_utils import calculate_DKP, close_manager, restart_channel_tasks
 from command_utils import handle_hnm_command, sort_hnm_times_channel, get_channels, process_hnm_window, archive_channels
 
@@ -191,42 +192,54 @@ async def on_ready():
         log_print(f"Display name set to: {display_name}")
 
 @bot.command(aliases=["faf", "fafnir"])
-async def Fafnir(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Fafnir(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Fafnir", "Nidhogg", day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Fafnir.brief = f"Used to set the ToD of Fafnir/Nidhogg."
 Fafnir.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["ad", "ada", "adam", "adamantoise"])
-async def Adamantoise(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Adamantoise(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+    
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Adamantoise", "Aspidochelone", day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Adamantoise.brief = f"Used to set the ToD of Adamantoise/Aspidochelone."
 Adamantoise.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["be", "behe", "behemoth"])
-async def Behemoth(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Behemoth(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Behemoth", "King Behemoth", day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Behemoth.brief = f"Used to set the ToD of Behemoth/King Behemoth."
 Behemoth.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["ka", "kinga"])
-async def KingArthro(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def KingArthro(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     try:
         hnm_channel, bot_channel = get_channels(bot, ctx)
-        await handle_hnm_command(ctx, "King Arthro", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+        await handle_hnm_command(ctx, "King Arthro", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
     except commands.MissingRequiredArgument as e:
         await ctx.send(f"Error: {e}\nUsage: `{ctx.prefix}{ctx.command} {ctx.command.usage}`")
     except Exception as e:
@@ -236,62 +249,80 @@ KingArthro.brief = "Used to set the ToD of King Arthro."
 KingArthro.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["sim"])
-async def Simurgh(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Simurgh(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Simurgh", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Simurgh", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Simurgh.brief = f"Used to set the ToD of Simurgh."
 Simurgh.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["shi", "shiki", "shikigami"])
-async def ShikigamiWeapon(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def ShikigamiWeapon(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Shikigami Weapon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Shikigami Weapon", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 ShikigamiWeapon.brief = f"Used to set the ToD of Shikigami Weapon."
 ShikigamiWeapon.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["kv", "kingv", "kingvine"])
-async def KingVinegarroon(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def KingVinegarroon(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "King Vinegarroon", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "King Vinegarroon", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 KingVinegarroon.brief = f"Used to set the ToD of King Vinegarroon."
 KingVinegarroon.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["vrt", "vrtr", "vrtra"])
-async def Vrtra(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Vrtra(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Vrtra", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Vrtra", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Vrtra.brief = f"Used to set the ToD of Vrtra."
 Vrtra.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["tia", "tiam", "tiamat"])
-async def Tiamat(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Tiamat(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Tiamat", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Tiamat", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Tiamat.brief = f"Used to set the ToD of Tiamat."
 Tiamat.usage = "<day> <timestamp>"
 
 @bot.command(aliases=["jor", "jorm", "jormungand"])
-async def Jormungand(ctx, day: str = commands.parameter(default="Day", description=config.day),
-                *, timestamp: str = commands.parameter(default="Timestamp", description=config.timestamp)
+async def Jormungand(ctx, day: typing.Optional[int] = 0, mod: typing.Optional[str] = None,
+                *, timestamp: typing.Optional[str] = None
                 ):
+    
+    day, mod, timestamp = sort_hnm_args(day, mod, timestamp)
+
     hnm_channel, bot_channel = get_channels(bot, ctx)
 
-    await handle_hnm_command(ctx, "Jormungand", None, day, timestamp, hnm_channel, bot_channel, bot.user)
+    await handle_hnm_command(ctx, "Jormungand", None, day, mod, timestamp, hnm_channel, bot_channel, bot.user)
 Jormungand.brief = f"Used to set the ToD of Jormungand."
 Jormungand.usage = "<day> <timestamp>"
 
