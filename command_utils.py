@@ -112,13 +112,13 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channe
     if unix_timestamp:
         if original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"] and mod == 'n':
             if original_hnm == "King Arthro":
-                await channel.send(f"- {original_hnm} 🦀: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :crab:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "King Vinegarroon":
-                await channel.send(f"- {original_hnm} 🦂: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :scorpion:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Shikigami Weapon":
-                await channel.send(f"- {original_hnm} 👹: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :japanese_ogre:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Simurgh":
-                await channel.send(f"- {original_hnm} 🐦: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :bird:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Jormungand":
                 await channel.send(f"- {original_hnm} :ice_cube::chicken::ice_cube:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Tiamat":
@@ -127,13 +127,13 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channe
                 await channel.send(f"- {original_hnm}: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
         elif original_hnm not in ["Fafnir", "Adamantoise", "Behemoth"] and mod == 'a':
             if original_hnm == "King Arthro":
-                await channel.send(f"- {original_hnm} :grey_question:🦀:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :grey_question::crab::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "King Vinegarroon":
-                await channel.send(f"- {original_hnm} :grey_question:🦂:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :grey_question::scorpion::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Shikigami Weapon":
-                await channel.send(f"- {original_hnm} :grey_question:👹:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :grey_question::japanese_ogre::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Simurgh":
-                await channel.send(f"- {original_hnm} :grey_question:🐦:grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                await channel.send(f"- {original_hnm} :grey_question::bird::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Jormungand":
                 await channel.send(f"- {original_hnm} :grey_question::ice_cube::chicken::ice_cube::grey_question:: <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
             elif original_hnm == "Tiamat":
@@ -154,7 +154,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channe
                     elif mod == "d":
                         await channel.send(f"- {original_hnm} :moneybag::zap::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     elif mod == "t":
-                        await channel.send(f"- {original_hnm} :moneybag::moneybag::zap::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                        await channel.send(f"- {original_hnm} :gem::zap::gem: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     else:
                         await channel.send(f"- {original_hnm} :zap: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Adamantoise":
@@ -163,7 +163,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channe
                     elif mod == "d":
                         await channel.send(f"- {original_hnm} :moneybag::turtle::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     elif mod == "t":
-                        await channel.send(f"- {original_hnm} :moneybag::moneybag::turtle::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                        await channel.send(f"- {original_hnm} :gem::turtle::gem: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     else:
                         await channel.send(f"- {original_hnm} :turtle: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 elif original_hnm == "Fafnir":
@@ -172,7 +172,7 @@ async def handle_hnm_command(ctx, hnm, hq, day: int, mod: str, timestamp, channe
                     elif mod == "d":
                         await channel.send(f"- {original_hnm} :moneybag::dragon_face::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     elif mod == "t":
-                        await channel.send(f"- {original_hnm} :moneybag::moneybag::dragon_face::moneybag::moneybag: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
+                        await channel.send(f"- {original_hnm} :gem::dragon_face::gem: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                     else:
                         await channel.send(f"- {original_hnm} :dragon_face: (**{day}**): <t:{unix_timestamp}:T> <t:{unix_timestamp}:R>")
                 else:
