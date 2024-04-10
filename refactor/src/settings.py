@@ -41,12 +41,24 @@ TZ = 'America/Los_Angeles'
 MAKECHANNEL = 20
 ARCHIVEWAIT = 5
 
+# Storage Globals
+KVOPEN = []
+PROCESSEDLIST = []
+RUNNINGTASKS = []
+
 # HNM Related Globals
 GW = ["Jormungand", "Tiamat", "Vrtra"]
 GK = ["Fafnir", "Adamantoise", "Behemoth"]
 HQ = {'Fafnir': 'Nidhogg', 'Adamantoise': 'Aspidochelone', 'Behemoth': 'King Behemoth'}
 SPAWNGOUP1 = GK + ["King Arthro", "Simurgh"] # 22HR Spawns
 SPAWNGOUP2 = ["Shikigami Weapon", "King Vinegarroon"]
+
+HNMINFO = {
+    'faf': 'https://discord.com/channels/1071271557336399992/1096788736483799091/1096788840611582122',
+    'ada': 'https://discord.com/channels/1071271557336399992/1096788329275596923/1096788446795800578',
+    'beh': 'https://discord.com/channels/1071271557336399992/1096789032618438696/1096789035118231672',
+    'kv':  '---> [FFERA - Western Altepa Desert Weather](https://ffera.com/index.php?p=zone&id=125) <--- Please check if there is upcoming weather.'
+}
 ALL_HNMS = {
     'n':{
         'Fafnir':           ':dragon_face: (****):',

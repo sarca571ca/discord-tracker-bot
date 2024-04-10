@@ -20,7 +20,6 @@ class Alise(commands.Bot):
                 ):
             channel = ctx.channel.id
             command_channel = settings.BOTCOMMANDS
-            log_print(f'{channel} == {command_channel}')
             if channel != command_channel:
                 await ctx.author.send('Please resubmit this command to the correct channel.')
                 return await ctx.message.delete()

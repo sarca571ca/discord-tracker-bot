@@ -1,6 +1,10 @@
-from src import settings, timeutil
+import discord
+import asyncio
+from src import settings, timeutil, stringutil
 
-class ChannelUtil:
+log_print = stringutil.StringUtil.log_print
+
+class Times:
 
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -21,7 +25,7 @@ class ChannelUtil:
                     if day >= 4:
                         hq = settings.HQ[hnm]
                         msg = hnm_list[hnm][:-7]
-                        await channel.send(f'- {hnm}/{hq} :rotating_light:{msg}{day_split[:3]}{day}{day_split[3:]} <t:{timestamp}:T> <t:{timestamp}:R>')
+                        await channel.send(f'- **{hnm}/{hq}** :rotating_light:{msg}{day_split[:3]}{day}{day_split[3:]} <t:{timestamp}:T> <t:{timestamp}:R>')
                     else:
                         msg = hnm_list[hnm][:-7]
                         await channel.send(f'- {hnm} {msg}{day_split[:3]}{day}{day_split[3:]} <t:{timestamp}:T> <t:{timestamp}:R>')
@@ -52,8 +56,146 @@ class ChannelUtil:
             else:
                 await channel.send(message.content)
 
+class Tasks:
+
+    def __init__(self, bot) -> None:
+        self.bot = bot
+
+    # Looks kinda sloppy let's looksat this latter to clean it up some. Can even setup the restart channel
+    # tasks to inherit some of this funcstions stuff to reduce bloat. I think i have to make it a class :/
     async def start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name):
+        channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
+        category_channels = category.text_channels
+        last_channel = category_channels[-1]
+        await channel.edit(position=last_channel.position + 1)
+        await channel.send(f"{hnm_name}")
+
+        for name in settings.HNMINFO:
+            if name in channel_name:
+                await channel.send(settings.HNMINFO[name])
+        if 'shi' in channel_name:
+            with open('images/shiki.png', 'rb') as f:
+                picture = discord.File(f)
+                await channel.send(file=picture)
+
+        wttask = asyncio.create_task(Manager.warn_ten(channel_name, category))
+        wttask.set_name(f"wt-{channel_name}")
+        task_name = wttask.get_name()
+        log_print(f"Warn Ten: Task for {task_name} has been started.")
+        settings.RUNNINGTASKS.append(task_name)
+        wmtask = asyncio.create_task(Manager.window_manager(channel_name, category, guild))
+        wmtask.set_name(f"wm-{channel_name}")
+        task_name = wmtask.get_name()
+        log_print(f"Window Manager: Task {task_name} has been started.")
+        settings.RUNNINGTASKS.append(task_name)
+
+    # This is gross with all the if and elif statements....
+    async def restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel):
+        if any(keyword in channel_name.lower() for keyword in ["jor", "vrt", "tia"]):
+            if time_diff >= 0 and time_diff <= (24 * 3600) + 300 and not settings.PROCESSEDLIST:
+                wmtask = asyncio.create_task(Manager.window_manager(channel_name, category, guild))
+                wmtask.set_name(f"wm-{channel_name}")
+                task_name = wmtask.get_name()
+                log_print(f"Window Manager: Task {task_name} has been started.")
+                settings.RUNNINGTASKS.append(task_name)
+            else:
+                processed_id = False
+                for entry in settings.PROCESSEDLIST:
+                    if existing_channel.id == entry["id"]:
+                        processed_id = True
+                        break
+
+                if time_diff >= 0 and time_diff <= (24 * 3600) + 300 and not processed_id:
+                    wmtask = asyncio.create_task(Manager.window_manager(channel_name, category, guild))
+                    wmtask.set_name(f"wm-{channel_name}")
+                    task_name = wmtask.get_name()
+                    log_print(f"Window Manager: Task {task_name} has been started.")
+                    settings.RUNNINGTASKS.append(task_name)
+        else:
+            if time_diff >= 0 and time_diff <= 3900 and not settings.PROCESSEDLIST and not settings.KVOPEN:
+                wmtask = asyncio.create_task(Manager.window_manager(channel_name, category, guild))
+                wmtask.set_name(f"wm-{channel_name}")
+                task_name = wmtask.get_name()
+                log_print(f"Window Manager: Task {task_name} has been started.")
+                settings.RUNNINGTASKS.append(task_name)
+            else:
+                processed_id = False
+                kv_id = False
+                for entry in settings.PROCESSEDLIST:
+                    if existing_channel.id == entry["id"]:
+                        processed_id = True
+                        break
+                for entry in settings.KVOPEN:
+                    if existing_channel.id == entry["id"]:
+                        kv_id = True
+                        break
+                if time_diff >= 0 and time_diff <= 3900 and not processed_id and not kv_id:
+                    wmtask = asyncio.create_task(Manager.window_manager(channel_name, category, guild))
+                    wmtask.set_name(f"wm-{channel_name}")
+                    task_name = wmtask.get_name()
+                    log_print(f"Window Manager: Task {task_name} has been started.")
+                    settings.RUNNINGTASKS.append(task_name)
+
+
+    async def warn_ten():
         pass
 
-    async def restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel):
+class Manager():
+
+    def __init__(self, bot) -> None:
+        self.bot = bot
+
+    async def window_manager():
+        pass
+
+    async def close_manager(channel_name, category, guild):
+        if not category:
+            return
+
+        channels = category.channels
+
+        try:
+            for channel in channels:
+                if isinstance(channel, discord.TextChannel) and channel_name in channel.name:
+                    async for message in channel.history(limit=1, oldest_first=True):
+                        dt, utc = calculate_time_diff(message.content)
+
+                        unix_now = int(datetime.now().timestamp())
+                        unix_target = int(dt.timestamp())
+
+                        time_diff = unix_now - unix_target
+                        sleep_time = unix_target - unix_now
+                        if time_diff <= -0:
+                            await asyncio.sleep(sleep_time)
+                            time_diff = int(datetime.now().timestamp()) - unix_target
+
+                        while time_diff >= 0 and time_diff <= 3600:
+                            if time_diff % 600 == 0:
+                                if "shi" in channel.name:
+                                    poptask = asyncio.create_task(calculate_DKP(guild, channel, channel_name, dt, utc))
+                                    poptask.set_name(f"pop-{channel_name}")
+                                    task_name = poptask.get_name()
+                                    log_print(f"Pop: Task for {task_name} has been started.")
+                                    config.running_tasks.append(task_name)
+                                else:
+                                    await asyncio.sleep(5)
+                            await asyncio.sleep(1)
+                            time_diff = int(datetime.now().timestamp()) - unix_target
+
+                        poptask = asyncio.create_task(calculate_DKP(guild, channel, channel_name, dt, utc))
+                        poptask.set_name(f"pop-{channel_name}")
+                        task_name = poptask.get_name()
+                        log_print(f"Pop: Task for {task_name} has been started.")
+                        config.running_tasks.append(task_name)
+        except asyncio.CancelledError:
+            log_print(f"Window Manager: Task for channel {channel_name} was cancelled.")
+
+
+    async def open():
+        pass
+
+    async def close():
+        pass
+
+    async def pop():
         pass

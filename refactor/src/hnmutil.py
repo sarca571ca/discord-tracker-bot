@@ -36,7 +36,7 @@ class HandleHNM:
         day = int(day) + 1
         unix_timestamp = timeutil.Time.parse_time(hnm, timestamp)
 
-        channel_util = channelutil.ChannelUtil(self)
+        channel_util = channelutil.Times(self)
         await channel_util.remove(hnm, channel)
         await channel_util.add(hnm, day, mod, unix_timestamp, channel)
 
@@ -64,7 +64,7 @@ class HandleHNM:
                                 break
                         else:
                             if existing_channel.category == hnm_category:
-                                await channelutil.ChannelUtil.restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
+                                await channelutil.Tasks.restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                     else:
                         channel_name = f"{channel_name}1"
                         existing_channel = discord.utils.get(guild.channels, name=channel_name)
@@ -75,8 +75,8 @@ class HandleHNM:
                                     break
                             else:
                                 if str(existing_channel.category_id) == hnm_category:
-                                    await channelutil.ChannelUtil.restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
+                                    await channelutil.Tasks.restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                         else:
-                            await channelutil.ChannelUtil.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
+                            await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
                 else:
-                    await channelutil.ChannelUtil.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
+                    await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)

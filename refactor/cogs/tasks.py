@@ -75,6 +75,7 @@ class CreateChannelTasks(commands.Cog):
             log_print("Catergory either not set properly in settings or doesn't exist.")
 
         now = timeutil.Time.now()
+        target_time = timeutil.Time.format_time(now)
         try:
             async for message in hnm_times_channel.history(limit=None, oldest_first=True):
                 if message.content.startswith("- "):
@@ -113,7 +114,7 @@ class CreateChannelTasks(commands.Cog):
                     else:
                         hnm_window_end = timeutil.Time.format_time(timestamp + (1 * 3600)) # 1 hour for everything else
 
-                    await hnmutil.HandleHNM.process_hnm_window(hnm_window_end, now, hnm, hnm_time, date,
+                    await hnmutil.HandleHNM.process_hnm_window(hnm_window_end, target_time, hnm, hnm_time, date,
                                              day, message, guild, category, timestamp, hnm_times_channel,
                                              hnm_name, time_diff)
                 pass
