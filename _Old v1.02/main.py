@@ -498,39 +498,6 @@ async def restart(ctx):
         log_print(f"An error occurred: \n{e.output.decode('utf-8')}")
 
 # @bot.command()
-# async def newchannel(ctx, permissions, category_name, channel_name):
-#     category = discord.utils.get(ctx.guild.categories, name=category_name)
-
-#     if not category:
-#         log_print("New Channel: Category not found!")
-#         return
-
-#     channel = await ctx.guild.create_text_channel(channel_name, category=category)
-#     if permissions == 0:
-#         await channel.set_permissions(ctx.guild.default_role, send_messages=False)
-#         await channel.set_permissions(ctx.guild.me, send_messages=True)
-
-#     log_print(f"New Channel: Channel {channel.mention} created successfully!")
-    
-# @bot.command(name='sm', help='Sends a message to the channel where the command was used')
-# async def send_message(ctx, *, message):
-#     await ctx.send(message)
-
-@bot.command(name='p', help='Prints all processed channels')
-async def processed_list(ctx):
-    processed = config.processed_channels_list
-    log_print("Processed Channels")
-    for line in processed:
-        log_print(line)
-
-@bot.command(name='r', help='Prints all processed channels')
-async def running_tasks(ctx):
-    running = asyncio.all_tasks()
-    log_print("Running Tasks")
-    for line in running:
-        log_print(line)
-
-# @bot.command()
 # async def debug(ctx):
     # now = int(time.time())
     # target_time = datetime.fromtimestamp(now)

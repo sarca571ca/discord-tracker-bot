@@ -1,13 +1,13 @@
 import pytz
 from src import settings, stringutil
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 log_print = stringutil.StringUtil.log_print
 
 class Time:
 
     def parse_time(hnm, timestamp):
-        time_zone = Time.tz()
+        time_zone = Time.bot_tz()
         current_date = datetime.now(time_zone).date()
         valid_format = False
         parsed_datetime = None
@@ -76,8 +76,15 @@ class Time:
         current_time = int(datetime.now().timestamp())
         return current_time
 
-    def tz():
+    def bot_now():
+        current_time = int(datetime.now(pytz.timezone(settings.TZ)).timestamp())
+        return current_time
+
+    def bot_tz(): # Timezone of the bot
         return pytz.timezone(settings.TZ)
+
+    def discord_tz():
+        return datetime.now(timezone.utc)
 
     def format_time(time: int):
         return datetime.fromtimestamp(time)

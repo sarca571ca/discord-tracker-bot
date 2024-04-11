@@ -26,6 +26,30 @@ class StringUtil():
         stripped_text = re.sub(pattern, r'\2', text)
         return stripped_text
 
+    def format_window_heading(word): # was async before but shouldnt need to be?
+        word = word[:48]
+
+        # Calculate the number of dashes needed on each side
+        dash_count = (54 - len(word)) // 2
+
+        # Create the formatted string
+        heading = '-' * dash_count + ' ' + word + ' ' + '-' * dash_count
+
+        return heading
+
+    async def find_last_window(ctx):
+        window_pattern = StringUtil.format_window_heading("Window (\d+)")
+
+        # Constructing the regex pattern based on the expected format
+        regex_pattern = r'^-+ Window (\d+) -+$'
+
+        async for message in ctx.channel.history(limit=None, oldest_first=False):
+            match = re.search(regex_pattern, message.content)
+            if match:
+                window_number = match.group(1)  # Extract the window number
+                window = f"Window {window_number}"
+                return window
+
     def log_print(msg):
         timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S] [ALISE   ]")
         log_message = f"{timestamp} {msg}"

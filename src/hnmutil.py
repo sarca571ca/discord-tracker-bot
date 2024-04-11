@@ -7,7 +7,7 @@ class HandleHNM:
 
     def __init__(self, bot):
         self.bot = bot
-    # Turn this garbage into a loop, it looks so bad
+    #!! Turn this garbage into a loop, it looks so bad
     async def find(self, ctx, cmd, day: int, mod: str, timestamp):
         if cmd in settings.FAFNIR:
             await HandleHNM.process(self.bot, ctx, 'Fafnir', day, mod, timestamp)

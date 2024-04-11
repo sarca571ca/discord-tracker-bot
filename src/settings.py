@@ -1,10 +1,15 @@
 # Server Globals
 TOKEN = ''
 GUILDID = 876434275661135982
+# Channels
 HNMTIMES = 1110052586561744896
 BOTCOMMANDS = 1110076161201020949
 CAMPPINGS = 1138678403730526379
+# Categories
 HNMCATEGORYID = 1110230423272952008
+DKPREVIEWID = 1166918703447805972
+DKPPROCESSINGID = 1110477603090997278
+ATTENDARCHID = 1111559599758245898
 
 # Command Gloabals
 FAFNIR = ['faf', 'fafnir']
@@ -40,6 +45,15 @@ TZ = 'America/Los_Angeles'
 # Genral Setting Globals
 MAKECHANNEL = 20
 ARCHIVEWAIT = 5
+
+WINDOWMEASSAGE = (
+'''```
+Note:
+    - Channel will be open for 5-Minutes after pop/last window.
+    - Channel is moved to Awaiting Processing category.
+    - Late x-in's (within reason) or corrections to your camp status can be made after its moved.
+```'''
+)
 
 # Storage Globals
 KVOPEN = []

@@ -2,7 +2,7 @@ import discord
 import asyncio
 
 from discord.ext import tasks, commands
-from src import hnmutil, timeutil, stringutil, settings
+from src import hnmutil, timeutil, stringutil, channelutil, settings
 
 log_print = stringutil.StringUtil.log_print
 
@@ -15,6 +15,7 @@ class SendHourWarning(commands.Cog):
     def cog_unload(self) -> tasks.Coroutine[tasks.Any, tasks.Any, None]:
         self.send_hour_warning.cancel()
 
+    #!! This whole task is janky with if statements ; ;
     @tasks.loop(seconds=60)
     async def send_hour_warning(self):
         hnm_timers_channel = self.bot.get_channel(settings.HNMTIMES)
@@ -26,8 +27,8 @@ class SendHourWarning(commands.Cog):
                 if message.content.startswith("- "):
                     timestamp, dt = timeutil.Time.strip_timestamp(message)
                     warning_msg = message.content.replace("- ", "", 1)
-                    hour_warn_time = timestamp - (60 * 60) # datetime.fromtimestamp(utc - (60 * 60))
-                    camp_end_time = timestamp + (60 * 60) # datetime.fromtimestamp(utc + (60 * 60))
+                    hour_warn_time = timestamp - (60 * 60)
+                    camp_end_time = timestamp + (60 * 60)
 
                     if camp_end_time >= now and hour_warn_time <= now:
                         if camp_pings_channel:
@@ -101,7 +102,7 @@ class CreateChannelTasks(commands.Cog):
                             channel_name = f"{nq}"
 
                     timestamp, dt = timeutil.Time.strip_timestamp(message)# dt, utc = calculate_time_diff(message.content) # Extracts the utc timestamp
-                    dt_pst = dt.astimezone(timeutil.Time.tz())
+                    dt_pst = dt.astimezone(timeutil.Time.bot_tz())
                     date = dt_pst.strftime("%b%d").lower()
                     hnm = channel_name.upper()
                     hnm_name = message.content.replace("- ", "", 1)
@@ -128,8 +129,38 @@ class CreateChannelTasks(commands.Cog):
         except Exception as e:
             log_print(f"Error: {e}")
 
+class DeleteOldChannels(commands.Cog):
+
+    def __init__(self, bot) -> None:
+        self.delete_old_channels.start()
+        self.bot = bot
+
+    def cog_unload(self) -> tasks.Coroutine[tasks.Any, tasks.Any, None]:
+        self.send_hour_warning.cancel()
+
+    @tasks.loop(hours=24)
+    async def delete_old_channels(self):
+        try:
+            archive_category = discord.utils.get(self.bot.guilds[0].categories, name=settings.ATTENDARCHID)
+            if archive_category:
+                for channel in archive_category.channels:
+                    if isinstance(channel, discord.TextChannel):
+                        if (timeutil.Time.discord_tz() - channel.created_at).days >= settings.ARCHIVEWAIT:
+                            await channelutil.Manager.archive_channels(archive_category, channel, archive_category, option="delete")
+            pass
+        except discord.errors.DiscordServerError as e:
+            if e.code == 0 and e.status == 503:
+                log_print("Service Unavailable error. Retrying in 60 seconds...")
+                await asyncio.sleep(60)
+                DeleteOldChannels.delete_old_channels.start()
+            else:
+                log_print(f"DiscordServerError: {e}")
+        except Exception as e:
+            log_print(f"Error: {e}")
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(SendHourWarning(bot))
     await bot.add_cog(CreateChannelTasks(bot))
+    await bot.add_cog(DeleteOldChannels(bot))
     log_print('All tasks loaded.')
