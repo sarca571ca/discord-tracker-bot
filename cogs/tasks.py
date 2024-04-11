@@ -51,7 +51,7 @@ class SendHourWarning(commands.Cog):
             if e.code == 0 and e.status == 503:
                 log_print("Service Unavailable error. Retrying in 60 seconds...")
                 await asyncio.sleep(60)
-                SendHourWarning.send_hour_warning.start()
+                SendHourWarning.send_hour_warning.restart()
             else:
                 log_print(f"DiscordServerError: {e}")
         except Exception as e:
@@ -123,7 +123,7 @@ class CreateChannelTasks(commands.Cog):
             if e.code == 0 and e.status == 503:
                 log_print("Service Unavailable error. Retrying in 60 seconds...")
                 await asyncio.sleep(60)
-                CreateChannelTasks.create_channel_task.start()
+                CreateChannelTasks.create_channel_task.restart()
             else:
                 log_print(f"DiscordServerError: {e}")
         except Exception as e:
@@ -152,7 +152,7 @@ class DeleteOldChannels(commands.Cog):
             if e.code == 0 and e.status == 503:
                 log_print("Service Unavailable error. Retrying in 60 seconds...")
                 await asyncio.sleep(60)
-                DeleteOldChannels.delete_old_channels.start()
+                DeleteOldChannels.delete_old_channels.restart()
             else:
                 log_print(f"DiscordServerError: {e}")
         except Exception as e:
