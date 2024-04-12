@@ -1,6 +1,6 @@
-import discord
 import asyncio
 import os
+import discord
 import pandas as pd
 import aiofiles
 from src import settings, timeutil, stringutil
@@ -35,7 +35,7 @@ class Times:
                 else:
                     msg = hnm_list[hnm]
                     await channel.send(f'- {hnm} {msg} <t:{timestamp}:T> <t:{timestamp}:R>')
-        await self.sort_timers_channel(channel)
+        await Times.sort_timers_channel(self, channel)
 
     async def sort_timers_channel(self, channel):
         messages = []
@@ -54,19 +54,19 @@ class Times:
             time_diff = unix_now - unix_target
             if any(keyword in message.content for keyword in ['Jormungand', 'Tiamat', 'Vrtra']) and time_diff > 86400 * 3:
                 continue
-            elif not any(keyword in message.content for keyword in ['Jormungand', 'Tiamat', 'Vrtra']) and time_diff > 86400:
+            if not any(keyword in message.content for keyword in ['Jormungand', 'Tiamat', 'Vrtra']) and time_diff > 86400:
                 continue
             else:
                 await channel.send(message.content)
 
 class Tasks:
 
-    def __init__(self, bot) -> None:
-        self.bot = bot
+    def __init__(self) -> None:
+        pass
 
     # Looks kinda sloppy let's looksat this latter to clean it up some. Can even setup the restart channel
     # tasks to inherit some of this funcstions stuff to reduce bloat. I think i have to make it a class :/
-    async def start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name):
+    async def start_channel_tasks(guild, channel_name, category, utc, hnm_name):
         channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
         category_channels = category.text_channels
         last_channel = category_channels[-1]
@@ -192,7 +192,7 @@ class Manager():
 
     def __init__(self, bot) -> None:
         self.bot = bot
-
+    #!! Too many statements, makes it hard to follow
     async def window_manager(channel_name, category, guild):
         if not category:
             return
@@ -309,7 +309,6 @@ class Manager():
                 if isinstance(channel, discord.TextChannel) and channel_name in channel.name:
                     async for message in channel.history(limit=1, oldest_first=True):
                         timestamp, dt = timeutil.Time.strip_timestamp(message)
-                        # dt, utc = calculate_time_diff(message.content)
 
                         unix_now = timeutil.Time.now()
                         unix_target = int(dt.timestamp())
@@ -426,7 +425,7 @@ class Manager():
         closetask.set_name(f"close-{ctx.channel.name}")
         task_name = closetask.get_name()
         log_print(f"Close: Task for {task_name} has been started.")
-        settings.PROCESSEDLIST.append(task_name)
+        settings.RUNNINGTASKS.append(task_name)
 
     async def pop(ctx, *linkshell):
         if linkshell:
@@ -585,4 +584,4 @@ class Manager():
             await channel.edit(position=index)
             await asyncio.sleep(2)
 
-        log_print(f"Sort Channels: Complete.")
+        log_print("Sort Channels: Complete.")

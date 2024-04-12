@@ -1,6 +1,6 @@
 __pycache__
 data
 token
-settings/settings.yaml
+settings/*
 _Old v1.02/settings/settings.yaml
 restart.sh

@@ -77,6 +77,6 @@ class HandleHNM:
                                 if str(existing_channel.category_id) == hnm_category:
                                     await channelutil.Tasks.restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel)
                         else:
-                            await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
+                            await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_name)
                 else:
-                    await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_times_channel, hnm_name)
+                    await channelutil.Tasks.start_channel_tasks(guild, channel_name, category, utc, hnm_name)
