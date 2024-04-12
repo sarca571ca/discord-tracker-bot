@@ -3,6 +3,8 @@ import os
 import discord
 import pandas as pd
 import aiofiles
+
+from discord.ext import commands
 from src import settings, timeutil, stringutil
 
 log_print = stringutil.StringUtil.log_print
@@ -61,11 +63,11 @@ class Times:
 
 class Tasks:
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, bot) -> None:
+        self.bot = bot
 
-    # Looks kinda sloppy let's looksat this latter to clean it up some. Can even setup the restart channel
-    # tasks to inherit some of this funcstions stuff to reduce bloat. I think i have to make it a class :/
+    #!! Looks kinda sloppy let's looksat this latter to clean it up some. Can even setup the restart channel
+    #!! tasks to inherit some of this funcstions stuff to reduce bloat. I think i have to make it a class :/
     async def start_channel_tasks(guild, channel_name, category, utc, hnm_name):
         channel = await guild.create_text_channel(channel_name, category=category, topic=f"<t:{utc}:T> <t:{utc}:R>")
         category_channels = category.text_channels
@@ -92,7 +94,7 @@ class Tasks:
         log_print(f"Window Manager: Task {task_name} has been started.")
         settings.RUNNINGTASKS.append(task_name)
 
-    # This is gross with all the if and elif statements....
+    #!! This is gross with all the if and elif statements....
     async def restart_channel_tasks(guild, channel_name, category, time_diff, existing_channel):
         if any(keyword in channel_name.lower() for keyword in ["jor", "vrt", "tia"]):
             if time_diff >= 0 and time_diff <= (24 * 3600) + 300 and not settings.PROCESSEDLIST:
@@ -395,7 +397,8 @@ class Manager():
             await ctx.message.delete()
             open_x = stringutil.StringUtil.format_window_heading("Open x-in")
             await ctx.send(open_x)
-            log_print(f"Open: {ctx.author.display_name} opened {ctx.channel.name}.")
+            msg = log_print(f"Open: {ctx.author.display_name} opened {ctx.channel.name}.")
+            await LogPrint.print(ctx.bot, msg)
             async for message in ctx.channel.history(limit=None, oldest_first=True):
                 if message.content.startswith("- "):
                     timestamp, dt = timeutil.Time.strip_timestamp(message)
@@ -423,7 +426,8 @@ class Manager():
         await ctx.message.delete()
         closed = stringutil.StringUtil.format_window_heading("Closed")
         await ctx.send(closed)
-        log_print(f"Close: {ctx.author.display_name} closed {ctx.channel.name}.")
+        msg = log_print(f"Close: {ctx.author.display_name} closed {ctx.channel.name}.")
+        await LogPrint.print(ctx.bot, msg)
         closetask = asyncio.create_task(Manager.close_manager(ctx.channel.name, ctx.channel.category, ctx.guild))
         closetask.set_name(f"close-{ctx.channel.name}")
         task_name = closetask.get_name()
@@ -456,7 +460,8 @@ class Manager():
                 return
 
         await ctx.message.delete()
-        log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
+        msg = log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
+        await LogPrint.print(ctx.bot, msg)
 
         window = await stringutil.StringUtil.find_last_window(ctx)
 
@@ -573,7 +578,7 @@ class Manager():
         guild = ctx.guild
 
         # Find the category by name
-        category = discord.utils.get(guild.categories, name=settings.DKPREVIEWID)
+        category = discord.utils.get(guild.categories, id=settings.DKPREVIEWID)
 
 
         # Sort the channels in the category by creation time
@@ -581,10 +586,21 @@ class Manager():
 
         # Reorder the channels from newest to oldest
         sorted_channels.reverse()
-        log_print(f"Sort Channels: {ctx.author.display_name} issued !sort_channels.")
+        msg = log_print(f"Sort Channels: {ctx.author.display_name} issued !sort_channels.")
+        await LogPrint.print(ctx.bot, msg)
         # Move the channels to the correct positions
         for index, channel in enumerate(sorted_channels):
             await channel.edit(position=index)
             await asyncio.sleep(2)
 
-        log_print("Sort Channels: Complete.")
+        msg = log_print("Sort Channels: Complete.")
+        await LogPrint.print(ctx.bot, msg)
+
+class LogPrint(commands.Bot):
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    async def print(bot, msg):
+        channel = bot.get_channel(settings.BOTLOGS)
+        await channel.send(msg)

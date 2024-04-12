@@ -21,7 +21,6 @@ class SendHourWarning(commands.Cog):
         hnm_timers_channel = self.bot.get_channel(settings.HNMTIMES)
         camp_pings_channel = self.bot.get_channel(settings.CAMPPINGS)
         now = timeutil.Time.now()
-
         try:
             async for message in hnm_timers_channel.history(limit=None, oldest_first=True):
                 if message.content.startswith("- "):
@@ -49,13 +48,16 @@ class SendHourWarning(commands.Cog):
                 pass
         except discord.errors.DiscordServerError as e:
             if e.code == 0 and e.status == 503:
-                log_print("Service Unavailable error. Retrying in 60 seconds...")
+                msg = log_print("SendHourWarning: Service Unavailable error. Retrying in 60 seconds...")
+                await channelutil.LogPrint.print(self.bot, msg)
                 await asyncio.sleep(60)
                 SendHourWarning.send_hour_warning.restart()
             else:
-                log_print(f"DiscordServerError: {e}")
+                msg = log_print(f"SendHourWarning: DiscordServerError -> {e}")
+                await channelutil.LogPrint.print(self.bot, msg)
         except Exception as e:
-            log_print(f"Error: {e}")
+            msg = log_print(f"SendHourWarning: Error -> {e}")
+            await channelutil.LogPrint.print(self.bot, msg)
 
 class CreateChannelTasks(commands.Cog):
 
@@ -73,7 +75,8 @@ class CreateChannelTasks(commands.Cog):
         hnm_times_channel = self.bot.get_channel(settings.HNMTIMES)
 
         if not category:
-            log_print("Catergory either not set properly in settings or doesn't exist.")
+            msg = log_print("HNM Attendance: Catergory either not set properly in settings or doesn't exist.")
+            await channelutil.LogPrint.print(self.bot, msg)
 
         now = timeutil.Time.now()
         target_time = timeutil.Time.format_time(now)
@@ -121,13 +124,16 @@ class CreateChannelTasks(commands.Cog):
                 pass
         except discord.errors.DiscordServerError as e:
             if e.code == 0 and e.status == 503:
-                log_print("Service Unavailable error. Retrying in 60 seconds...")
+                msg = log_print("CreateChannelTask: Service Unavailable error. Retrying in 60 seconds...")
+                await channelutil.LogPrint.print(self.bot, msg)
                 await asyncio.sleep(60)
                 CreateChannelTasks.create_channel_task.restart()
             else:
-                log_print(f"DiscordServerError: {e}")
+                msg = log_print(f"CreateChannelTask: DiscordServerError -> {e}")
+                await channelutil.LogPrint.print(self.bot, msg)
         except Exception as e:
-            log_print(f"Error: {e}")
+            msg = log_print(f"CreateChannelTask: Error -> {e}")
+            await channelutil.LogPrint.print(self.bot, msg)
 
 class DeleteOldChannels(commands.Cog):
 
@@ -150,17 +156,20 @@ class DeleteOldChannels(commands.Cog):
             pass
         except discord.errors.DiscordServerError as e:
             if e.code == 0 and e.status == 503:
-                log_print("Service Unavailable error. Retrying in 60 seconds...")
+                msg = log_print("Service Unavailable error. Retrying in 60 seconds...")
+                await channelutil.LogPrint.print(self.bot, msg)
                 await asyncio.sleep(60)
                 DeleteOldChannels.delete_old_channels.restart()
             else:
-                log_print(f"DiscordServerError: {e}")
+                msg = log_print(f"DiscordServerError: {e}")
+                await channelutil.LogPrint.print(self.bot, msg)
         except Exception as e:
-            log_print(f"Error: {e}")
+            msg = log_print(f"Error: {e}")
 
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(SendHourWarning(bot))
     await bot.add_cog(CreateChannelTasks(bot))
     await bot.add_cog(DeleteOldChannels(bot))
-    log_print('All tasks loaded.')
+    msg = log_print('All tasks loaded. Alise is online.')
+    await channelutil.LogPrint.print(bot, msg)

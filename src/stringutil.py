@@ -54,3 +54,4 @@ class StringUtil():
         timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S] [ALISE   ]")
         log_message = f"{timestamp} {msg}"
         print(log_message)
+        return log_message
