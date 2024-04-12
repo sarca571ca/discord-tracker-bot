@@ -158,7 +158,8 @@ class Tasks:
                             await asyncio.sleep(delay.total_seconds())
                         window_in_ten = stringutil.StringUtil.format_window_heading("Window opens in 20 Minutes x-in")
                         await channel.send(window_in_ten)
-                        await channel.send(settings.WINDOWMEASSAGE)
+                        wmsg = await channel.send(settings.WINDOWMEASSAGE)
+                        await wmsg.pin()
 
                         return
                 elif isinstance(channel, discord.TextChannel) and channel_name in channel.name and any(keyword in channel.name for keyword in ["kv"]):
@@ -170,7 +171,8 @@ class Tasks:
                             await asyncio.sleep(delay.total_seconds())
                         window_in_ten = stringutil.StringUtil.format_window_heading("Window opens in 20 Minutes")
                         await channel.send(window_in_ten)
-                        await channel.send(settings.WINDOWMEASSAGE)
+                        wmsg = await channel.send(settings.WINDOWMEASSAGEKV)
+                        await wmsg.pin()
 
                         return
                 elif isinstance(channel, discord.TextChannel) and channel_name in channel.name and any(keyword in channel.name for keyword in ["jor", "vrt", "tia"]):
@@ -182,7 +184,8 @@ class Tasks:
                             await asyncio.sleep(delay.total_seconds())
                         window_in_ten = stringutil.StringUtil.format_window_heading("Window opens in 20 Minutes")
                         await channel.send(window_in_ten)
-                        await channel.send(settings.WINDOWMEASSAGE)
+                        wmsg = await channel.send(settings.WINDOWMEASSAGEGW)
+                        await wmsg.pin()
 
                         return
         except asyncio.CancelledError:
@@ -221,7 +224,7 @@ class Manager():
                             window = round(time_diff / 3600) + 1
                             first_window = stringutil.StringUtil.format_window_heading(f"Window {window} in 5-Minutes x-in")
                             await channel.send(first_window)
-                            await channel.send("```Remember a proper hold party is required for DKP \nAll x-in's should be x-job, eg. x-blm```")
+                            await channel.send("```Remember a proper hold party(See Channel Pins) is required for DKP\nAll x-in's should be x-job, eg. x-blm```")
                             gw_time = timeutil.Time.now() - timestamp
 
                         if any(keyword in channel.name for keyword in ["jor", "vrt", "tia"]):
@@ -232,7 +235,7 @@ class Manager():
                                 if window_open % 3600 == 0:
                                     window_number_open = stringutil.StringUtil.format_window_heading(f"Window {window} in 5-Minutes x-in")
                                     await channel.send(window_number_open)
-                                    await channel.send("```Remember a proper hold party is required for DKP \nAll x-in's should be x-job, eg. x-blm```")
+                                    await channel.send("```Remember a proper hold party(See Channel Pins) is required for DKP\nAll x-in's should be x-job, eg. x-blm```")
                                 if window_close % 3600 == 0:
                                     window_number_close = stringutil.StringUtil.format_window_heading(f"Window {window} closed no more x-in")
                                     await channel.send(window_number_close)

@@ -55,6 +55,26 @@ Note:
 ```'''
 )
 
+WINDOWMEASSAGEKV = (
+'''```
+Note:
+    - Channel is manually managed, please ensure there will be weather before x-in.
+    - The !pop command will work within this channel.
+    - Late x-in's (within reason) or corrections to your camp status can be made after its moved.
+```'''
+)
+
+WINDOWMEASSAGEGW = (
+'''```
+Note:
+    - Channel is manually managed, a valid hold party must be present for dkp.
+    - Conditions for valid hold party are: Tank (w/ Resist Set), BRD, WHM, 2 Sleeps
+    - The !pop command will work within this channel.
+    - Windows will be opened 5-Minutes prior to window and closed 1-Minute after window.
+    - Late x-in's won't be allowed due to the nature of this camp.
+```'''
+)
+
 # Storage Globals
 KVOPEN = []
 PROCESSEDLIST = []
