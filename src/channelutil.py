@@ -343,7 +343,7 @@ class Manager():
                         log_print(f"Pop: Task for {task_name} has been started.")
                         settings.RUNNINGTASKS.append(task_name)
         except asyncio.CancelledError:
-            log_print(f"Window Manager: Task for channel {channel_name} was cancelled.")
+            log_print(f"Close Manager: Task for channel {channel_name} was cancelled.")
 
     async def dkp_review(guild, channel, channel_name, dt, utc):
         existing_task = asyncio.all_tasks()
@@ -358,11 +358,11 @@ class Manager():
         for task in existing_task:
             if task.get_name() == f"wm-{channel_name}" or task.get_name() == f"wt-{channel_name}":
                 task.cancel()
-                log_print(f"Calc DKP: WM/WT-Task for channel {channel_name} was completed.")
+                log_print(f"DKP Review: WM/WT-Task for channel {channel_name} was completed.")
 
         await channel.send("Moving channel for dkp review in 5 minutes.")
         await asyncio.sleep(300)
-        category = discord.utils.get(guild.categories, id=settings.DKPREVIEWID)
+        category = discord.utils.get(guild.categories, id=settings.AWAITINGPROCESSINGID)
         await channel.edit(category=category)
         dkp_review = stringutil.StringUtil.format_window_heading("DKP Review")
         await channel.send(dkp_review)
@@ -370,7 +370,7 @@ class Manager():
         for task in existing_task:
             if task.get_name() == f"pop-{channel_name}" or task.get_name() == f"close-{channel_name}":
                 task.cancel()
-                log_print(f"Calc DKP: Pop-Task for channel {channel_name} was completed.")
+                log_print(f"DKP Review: Pop-Task for channel {channel_name} was completed.")
 
     async def open(ctx):
         async for message in ctx.channel.history(limit=1, oldest_first=True):
@@ -457,7 +457,11 @@ class Manager():
         for entry in settings.PROCESSEDLIST:
             if ctx.channel.id == entry["id"]:
                 log_print(f"Pop: {ctx.channel.name} has already been processed. Ignoring.")
-                return
+                return await ctx.author.send('The !pop command has already been issued in this channel.')
+        for entry in settings.EXTENDEDTASK:
+            if ctx.channel.id == entry["id"]:
+                log_print(f"Pop: {ctx.channel.name} has been extend only !stable can close.")
+                return await ctx.author.send('The !pop command doesn\'t work on extended camps. Please use !stable.')
 
         await ctx.message.delete()
         msg = log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
@@ -480,6 +484,73 @@ class Manager():
         task_name = poptask.get_name()
         log_print(f"Pop: Task for {task_name} has been started.")
         settings.RUNNINGTASKS.append(task_name)
+
+    async def camp_continue(ctx):
+        async for message in ctx.channel.history(limit=1, oldest_first=True):
+            timestamp, dt = timeutil.Time.strip_timestamp(message)
+
+        existing_task = asyncio.all_tasks()
+        for task in existing_task:
+            if task.get_name() == f"wm-{ctx.channel.name}" or task.get_name() == f"wt-{ctx.channel.name}":
+                task.cancel()
+
+        process_dict = {
+            "id": ctx.channel.id,
+            "utc": timestamp,
+            "processed": False
+        }
+
+        settings.EXTENDEDTASK.append(process_dict)
+        await ctx.message.delete()
+        extended = stringutil.StringUtil.format_window_heading("Camp Extended")
+        await ctx.send(extended)
+        msg = log_print(f"Continued: {ctx.author.display_name} extended camp {ctx.channel.name}.")
+        await LogPrint.print(ctx.bot, msg)
+        extendtask = asyncio.create_task(Manager.close_manager(ctx.channel.name, ctx.channel.category, ctx.guild))
+        extendtask.set_name(f"extend-{ctx.channel.name}")
+        task_name = extendtask.get_name()
+        log_print(f"Continued: Task for {task_name} has been started.")
+        settings.RUNNINGTASKS.append(task_name)
+        pass
+
+    async def stable(ctx):
+        async for message in ctx.channel.history(limit=1, oldest_first=True):
+            timestamp, dt = timeutil.Time.strip_timestamp(message)
+
+        await ctx.message.delete()
+        msg = log_print(f"Pop: {ctx.author.display_name} issued !pop command in {ctx.channel.name}.")
+        await LogPrint.print(ctx.bot, msg)
+
+        heading = stringutil.StringUtil.format_window_heading("Camp is Stable")
+
+        await ctx.channel.send(heading)
+
+        poptask = asyncio.create_task(Manager.dkp_review(ctx.guild, ctx.channel, ctx.channel.name, dt, timestamp))
+        poptask.set_name(f"stable-{ctx.channel.name}")
+        task_name = poptask.get_name()
+        log_print(f"Stable: Task for {task_name} has been started.")
+        settings.RUNNINGTASKS.append(task_name)
+
+    async def enrage(ctx, window: int):
+        async for message in ctx.channel.history(limit=1, oldest_first=True):
+            timestamp, dt = timeutil.Time.strip_timestamp(message)
+        time_open = timeutil.Time.now() + 600
+        enrage_msg = stringutil.StringUtil.format_window_heading(f"Enrage {window}")
+        await ctx.channel.send(enrage_msg)
+        enrage = True
+        while enrage:
+            now = timeutil.Time.now()
+            if (time_open - now) <= 0:
+                enrage_close_msg = stringutil.StringUtil.format_window_heading(f'Enrage {window} Closed')
+                await ctx.channel.send(enrage_close_msg)
+
+                poptask = asyncio.create_task(Manager.dkp_review(ctx.guild, ctx.channel, ctx.channel.name, dt, timestamp))
+                poptask.set_name(f"pop-{ctx.channel.name}")
+                task_name = poptask.get_name()
+                log_print(f"Pop: Task for {task_name} has been started.")
+                settings.RUNNINGTASKS.append(task_name)
+                enrage = False
+            await asyncio.sleep(5)
 
     async def archive_channels(archive_category, archive_channel, category, option):
         data_dir = "data"
@@ -578,7 +649,7 @@ class Manager():
         guild = ctx.guild
 
         # Find the category by name
-        category = discord.utils.get(guild.categories, id=settings.DKPREVIEWID)
+        category = discord.utils.get(guild.categories, id=settings.AWAITINGPROCESSINGID)
 
 
         # Sort the channels in the category by creation time

@@ -1,5 +1,6 @@
 import discord.ext
 import typing
+import asyncio
 from discord.ext import commands
 import discord.ext.commands
 from src import settings, stringutil, hnmutil, channelutil, botutil
@@ -54,8 +55,8 @@ class Alise(commands.Bot):
             await channelutil.Manager.close(ctx)
 
         @self.command(name='pop')
-        async def pop(ctx):
-            await channelutil.Manager.pop(ctx)
+        async def pop(ctx, *linkshell):
+            await channelutil.Manager.pop(ctx, *linkshell)
 
         @self.command(name='sort_channels', help='Sort channels in a category from newest to oldest.')
         async def sort_channels(ctx):
@@ -76,6 +77,46 @@ class Alise(commands.Bot):
                 return await ctx.message.delete()
 
             await botutil.BotUtil.restart(ctx)
+        @self.command(name='continue')
+        async def camp_continue(ctx):
+            await channelutil.Manager.camp_continue(ctx)
+
+        @self.command(name='stable')
+        async def stable(ctx):
+            await channelutil.Manager.stable(ctx)
+
+        @self.command(name='enrage')
+        async def enrage(ctx, window: typing.Optional[int] = 0):
+            category = ctx.channel.category
+            awaiting_processing_category = discord.utils.get(ctx.guild.categories, id=settings.AWAITINGPROCESSINGID)
+            hnm_times_category = discord.utils.get(ctx.guild.categories, id=settings.HNMCATEGORYID)
+            if not category or category.name != awaiting_processing_category.name:
+                await ctx.send(f"The command can only be used in the '{awaiting_processing_category}' category.")
+                return
+            if window == 0:
+                await ctx.author.send("Please resend the command !enrage with a number please. eg. !enrage 1")
+                return await ctx.message.delete()
+
+            await ctx.channel.edit(category=hnm_times_category)
+            enrage_task = asyncio.create_task(channelutil.Manager.enrage(ctx, window))
+            enrage_task.set_name(f"wm-{ctx.channel.name}")
+            task_name = enrage_task.get_name()
+            log_print(f"Window Manager: Task {task_name} has been started.")
+            settings.RUNNINGTASKS.append(task_name)
+            await ctx.message.delete()
+
+        @self.command() # Archive command used for moving channels from DKP Review Category
+        async def archive(ctx, option=None):
+            channel = ctx.channel
+            category = ctx.channel.category
+            dkp_processing_category = discord.utils.get(ctx.guild.categories, id=settings.DKPREVIEWID)
+            archive_category = discord.utils.get(ctx.guild.categories, id=settings.ATTENDARCHID)
+
+            if not category or category.name != dkp_processing_category.name:
+                await ctx.send(f"The command can only be used in the '{dkp_processing_category}' category.")
+                return
+
+            await channelutil.Manager.archive_channels(archive_category, channel, category, option)
 
         # @self.command(name='debug')
         # async def debug(ctx):
