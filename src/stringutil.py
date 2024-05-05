@@ -12,9 +12,13 @@ class StringUtil():
             day = 0
             mod = 'n'
         elif timestamp is None:
-            if mod != ['n', 'a', 'd', 't'] and day != ['n', 'a', 'd', 't']:
+            if mod != ['n', 'a', 'd', 't'] and day != ['n', 'a', 'd', 't'] and len(str(day)) <= 2:
                 timestamp = mod
                 mod = 'n'
+            elif len(mod) > 1:
+                timestamp = str(day) + ' ' + mod
+                mod = 'n'
+                day = 0
             else:
                 timestamp = mod
                 mod = day
