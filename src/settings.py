@@ -55,6 +55,7 @@ Note:
     - Channel will be open for 5-Minutes after pop/last window.
     - Channel is moved to Awaiting Processing category.
     - Late x-in's (within reason) or corrections to your camp status can be made after its moved.
+    - DO NOT X-IN before arriving to camp. This means in position and buffed.
 ```'''
 )
 
