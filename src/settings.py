@@ -93,9 +93,9 @@ SPAWNGOUP1 = GK + ["King Arthro", "Simurgh"] # 22HR Spawns
 SPAWNGOUP2 = ["Shikigami Weapon", "King Vinegarroon"]
 
 HNMINFO = {
-    'faf': 'https://discord.com/channels/1071271557336399992/1096788736483799091/1096788840611582122',
-    'ada': 'https://discord.com/channels/1071271557336399992/1096788329275596923/1096788446795800578',
-    'beh': 'https://discord.com/channels/1071271557336399992/1096789032618438696/1096789035118231672',
+    'faf': '',
+    'ada': 'https://media.discordapp.net/attachments/1175180691550523452/1261704293166092368/image.png?ex=66953eb0&is=6693ed30&hm=ba8558476bd46f7996b6a93233a2b8548ca8528eaa2ffe828ac02b997b3dfbdb&=&format=webp&quality=lossless',
+    'beh': 'https://cdn.discordapp.com/attachments/1175180586030202940/1261506701153275926/image.png?ex=6695d82b&is=669486ab&hm=20d64d9dae37e141db381b5fe9db3653474971e1d6dadecd49b56a4441bf4bb3&',
     'kv':  '---> [FFERA - Western Altepa Desert Weather](https://ffera.com/index.php?p=zone&id=125) <--- Please check if there is upcoming weather.'
 }
 ALL_HNMS = {
