@@ -276,7 +276,7 @@ class Manager():
                             while time_diff >= 0 and time_diff <= 3600:
                                 if time_diff % 600 == 0:
                                     window = round(time_diff / 600) + 1
-                                    if ["shi" or "bs"] in channel.name:
+                                    if "shi" or "bs" in channel.name:
                                         nm_name = "Shikigami Weapon" if "shi" in channel.name else "Bloodsucker"
                                         instant_pop_nm_spawn = stringutil.StringUtil.format_window_heading(f"{nm_name} has spawned")
                                         await channel.send(instant_pop_nm_spawn)
