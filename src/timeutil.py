@@ -34,7 +34,7 @@ class Time:
             if valid_format:
                 if parsed_datetime > datetime.now(time_zone):
                     current_date -= timedelta(days=1)
-                if hnm not in settings.GW:
+                if hnm not in settings.GREATER_THAN_DAY:
                     parsed_datetime = time_zone.localize(datetime.combine(current_date, parsed_datetime.time()))
 
                 unix_timestamp = int(parsed_datetime.timestamp())
