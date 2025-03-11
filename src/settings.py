@@ -22,12 +22,13 @@ KA = ['ka', 'kinga']
 SIM = ['sim']
 SHIKI = ['shi', 'shiki', 'shikigami']
 KV = ['kv', 'kingv', 'kingvine']
+BLOODSUCKER = ['bs', 'blo', 'bloodsucker']
 VRTRA = ['vrt', 'vrtr', 'vrtra']
 TIAMAT = ['tia', 'tiam', 'tiamat']
 JORM = ['jor', 'jorm', 'jormundgand']
 
 ALIASES = [FAFNIR, ADAMANTOISE, BEHEMOTH, KA, SIM, SHIKI, KV, VRTRA, TIAMAT, JORM]
-HNMCOMMANDS = FAFNIR + ADAMANTOISE + BEHEMOTH + KA + SIM + SHIKI + KV + VRTRA + TIAMAT + JORM
+HNMCOMMANDS = FAFNIR + ADAMANTOISE + BEHEMOTH + KA + SIM + SHIKI + KV + BLOODSUCKER + VRTRA + TIAMAT + JORM
 
 # Time Related Globals
 DATEFORMATS = [ # List of accepted date formats
@@ -105,6 +106,7 @@ ALL_HNMS = {
         'Behemoth':         ':zap: (****):',
         'King Arthro':      ':crab::',
         'King Vinegarroon': ':scorpion::',
+        'Bloodsucker':      ':drop_of_blood::',
         'Shikigami Weapon': ':japanese_ogre::',
         'Simurgh':          ':bird::',
         'Jormungand':       ':ice_cube::chicken::ice_cube::',
@@ -117,6 +119,7 @@ ALL_HNMS = {
         'Behemoth':         ':grey_question::zap::grey_question: (****):',
         'King Arthro':      ':grey_question::crab::grey_question::',
         'King Vinegarroon': ':grey_question::scorpion::grey_question::',
+        'Bloodsucker':      ':grey_question::drop_of_blood::grey_question::',
         'Shikigami Weapon': ':grey_question::japanese_ogre::grey_question::',
         'Simurgh':          ':grey_question::bird::grey_question::',
         'Jormungand':       ':grey_question::ice_cube::chicken::ice_cube::grey_question::',

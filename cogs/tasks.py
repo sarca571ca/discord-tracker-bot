@@ -97,6 +97,8 @@ class CreateChannelTasks(commands.Cog):
                         channel_name = "ka"
                     elif "King Vinegarroon" in message.content:
                         channel_name = "kv"
+                    elif "Bloodsucker" in message.content:
+                        channel_name = "bs"
                     else:
                         if day == None or int(day) <= 3:
                             channel_name = message.content[2:5].strip()
