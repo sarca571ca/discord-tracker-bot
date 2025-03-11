@@ -23,6 +23,8 @@ class HandleHNM:
             await HandleHNM.process(self.bot, ctx, 'Simurgh', day, mod, timestamp)
         elif cmd in settings.KV:
             await HandleHNM.process(self.bot, ctx, 'King Vinegarroon', day, mod, timestamp)
+        elif cmd in settings.BLOODSUCKER:
+            await HandleHNM.process(self.bot, ctx, 'Bloodsucker', day, mod, timestamp)
         elif cmd in settings.TIAMAT:
             await HandleHNM.process(self.bot, ctx, 'Tiamat', day, mod, timestamp)
         elif cmd in settings.VRTRA:
