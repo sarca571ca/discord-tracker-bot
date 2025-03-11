@@ -53,6 +53,8 @@ class Time:
                 unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
             elif hnm in ["Jormungand", "Tiamat", "Vrtra"]:
                 unix_timestamp += (84 * 3600)  # Add 84 hours for GrandWyrms and KA
+            elif hnm in ["Bloodsucker"]:
+                unix_timestamp += (72 * 3600)  # Add 84 hours for GrandWyrms and KA
             else:
                 unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
         except (UnboundLocalError):

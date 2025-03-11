@@ -276,17 +276,15 @@ class Manager():
                             while time_diff >= 0 and time_diff <= 3600:
                                 if time_diff % 600 == 0:
                                     window = round(time_diff / 600) + 1
-                                    if "shi" in channel.name:
-                                        shiki_spawn = stringutil.StringUtil.format_window_heading("Shikigami Weapon has spawned")
-                                        await channel.send(shiki_spawn)
+                                    if ["shi" or "bs"] in channel.name:
+                                        nm_name = "Shikigami Weapon" if "shi" in channel.name else "Bloodsucker"
+                                        instant_pop_nm_spawn = stringutil.StringUtil.format_window_heading(f"{nm_name} has spawned")
+                                        await channel.send(instant_pop_nm_spawn)
                                         poptask = asyncio.create_task(Manager.dkp_review(guild, channel, channel_name, dt, timestamp))
                                         poptask.set_name(f"pop-{channel_name}")
                                         task_name = poptask.get_name()
                                         log_print(f"Pop: Task for {task_name} has been started.")
                                         settings.RUNNINGTASKS.append(task_name)
-                                    # elif "kv" in channel.name:
-                                    #     kv_open = stringutil.StringUtil.format_window_heading("King Vinegarroon Window is open")
-                                    #     await channel.send(kv_open)
                                     else:
                                         window_count = stringutil.StringUtil.format_window_heading(f"Window {window}")
                                         await channel.send(window_count)
@@ -326,7 +324,7 @@ class Manager():
 
                         while time_diff >= 0 and time_diff <= 3600:
                             if time_diff % 600 == 0:
-                                if "shi" in channel.name:
+                                if ["shi" or "bs"] in channel.name:
                                     poptask = asyncio.create_task(Manager.dkp_review(guild, channel, channel_name, dt, timestamp))
                                     poptask.set_name(f"pop-{channel_name}")
                                     task_name = poptask.get_name()
