@@ -87,7 +87,7 @@ RUNNINGTASKS = []
 EXTENDEDTASK = []
 
 # HNM Related Globals
-GW = ["Jormungand", "Tiamat", "Vrtra"]
+GREATER_THAN_DAY = ["Jormungand", "Tiamat", "Vrtra", "Bloodsucker"]
 GK = ["Fafnir", "Adamantoise", "Behemoth"]
 HQ = {'Fafnir': 'Nidhogg', 'Adamantoise': 'Aspidochelone', 'Behemoth': 'King Behemoth'}
 SPAWNGOUP1 = GK + ["King Arthro", "Simurgh"] # 22HR Spawns
