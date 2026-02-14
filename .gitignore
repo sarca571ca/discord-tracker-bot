@@ -4,3 +4,4 @@ token
 settings/*
 _Old v1.02/settings/settings.yaml
 restart.sh
+.env
