@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-import aiofile
+import aiofiles
 import discord
 import pandas as pd
 from discord.ext import commands
