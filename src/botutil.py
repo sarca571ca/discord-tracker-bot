@@ -18,7 +18,9 @@ class BotUtil:
     async def restart(self):
         "Restarts the bot."
         try:
-            output = subprocess.check_output(["/bin/bash", "./restart.sh"])
+            output = subprocess.check_output(
+                ["sudo", "/usr/bin/systemctl", "restart", "alise.service"]
+            )
             log_print(f"Script executed successfully: \n{output.decode('utf-8')}")
         except subprocess.CalledProcessError as error:
             log_print(f"An error occurred: \n{error.output.decode('utf-8')}")
