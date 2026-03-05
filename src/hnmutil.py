@@ -50,7 +50,6 @@ class HandleHNM:
         await channel_util.add(hnm, day, mod, unix_timestamp, channel)
 
     async def process_hnm_window(
-        self,
         hnm_window_end,
         target_time,
         hnm,
