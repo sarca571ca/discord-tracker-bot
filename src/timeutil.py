@@ -1,8 +1,11 @@
-import pytz
-from src import settings, stringutil
 from datetime import datetime, timedelta, timezone
 
+import pytz
+
+from src import settings, stringutil
+
 log_print = stringutil.StringUtil.log_print
+
 
 class Time:
 
@@ -15,7 +18,9 @@ class Time:
         try:
             for date_format in settings.DATEFORMATS:
                 try:
-                    parsed_datetime = time_zone.localize(datetime.strptime(timestamp, date_format))
+                    parsed_datetime = time_zone.localize(
+                        datetime.strptime(timestamp, date_format)
+                    )
                     valid_format = True
                     break
                 except ValueError:
@@ -25,7 +30,9 @@ class Time:
                 for time_format in settings.TIMEFORMATS:
                     try:
                         parsed_time = datetime.strptime(timestamp, time_format).time()
-                        parsed_datetime = time_zone.localize(datetime.combine(current_date, parsed_time))
+                        parsed_datetime = time_zone.localize(
+                            datetime.combine(current_date, parsed_time)
+                        )
                         valid_format = True
                         break
                     except ValueError:
@@ -35,7 +42,9 @@ class Time:
                 if parsed_datetime > datetime.now(time_zone):
                     current_date -= timedelta(days=1)
                 if hnm not in settings.GREATER_THAN_DAY:
-                    parsed_datetime = time_zone.localize(datetime.combine(current_date, parsed_datetime.time()))
+                    parsed_datetime = time_zone.localize(
+                        datetime.combine(current_date, parsed_datetime.time())
+                    )
 
                 unix_timestamp = int(parsed_datetime.timestamp())
 
@@ -50,14 +59,14 @@ class Time:
 
         try:
             if hnm in ["Fafnir", "Adamantoise", "Behemoth", "King Arthro", "Simurgh"]:
-                unix_timestamp += (22 * 3600)  # Add 22 hours for GroundKings and KA
+                unix_timestamp += 22 * 3600  # Add 22 hours for GroundKings and KA
             elif hnm in ["Jormungand", "Tiamat", "Vrtra"]:
-                unix_timestamp += (84 * 3600)  # Add 84 hours for GrandWyrms and KA
+                unix_timestamp += 84 * 3600  # Add 84 hours for GrandWyrms and KA
             elif hnm in ["Bloodsucker"]:
-                unix_timestamp += (72 * 3600)  # Add 84 hours for GrandWyrms and KA
+                unix_timestamp += 71 * 3600  # Add 84 hours for GrandWyrms and KA
             else:
-                unix_timestamp += (21 * 3600)  # Add 21 hours for other HNMs
-        except (UnboundLocalError):
+                unix_timestamp += 21 * 3600  # Add 21 hours for other HNMs
+        except UnboundLocalError:
             log_print("Parse Time: No timestamp provided.")
             return
         except (ValueError, OverflowError):
@@ -82,7 +91,7 @@ class Time:
         current_time = int(datetime.now(pytz.timezone(settings.TZ)).timestamp())
         return current_time
 
-    def bot_tz(): # Timezone of the bot
+    def bot_tz():  # Timezone of the bot
         return pytz.timezone(settings.TZ)
 
     def discord_tz():
@@ -90,3 +99,4 @@ class Time:
 
     def format_time(time: int):
         return datetime.fromtimestamp(time)
+
