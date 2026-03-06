@@ -78,9 +78,11 @@ class SendHourWarning(commands.Cog):
 
 class CreateChannelTasks(commands.Cog):
 
+
     def __init__(self, bot) -> None:
         self.create_channel_task.start()
         self.bot = bot
+        
 
     def cog_unload(self) -> tasks.Coroutine[tasks.Any, tasks.Any, None]:
         self.send_hour_warning.cancel()
@@ -114,13 +116,19 @@ class CreateChannelTasks(commands.Cog):
                     else:
                         day = None
 
-                    if "King Arthro" in message.content:
-                        channel_name = "ka"
-                    elif "King Vinegarroon" in message.content:
-                        channel_name = "kv"
-                    elif "Bloodsucker" in message.content:
-                        channel_name = "bs"
-                    else:
+                special_hnms = {
+                        "King Arthro": "ka",
+                        "King Vinegarroon": "kv",
+                        "Bloodsucker": "bs",
+                    }
+
+                    channel_name = None
+                    for key, short in special_hnms.items():
+                        if key in message.content:
+                            channel_name = short
+                            break
+
+                    if channel_name is None:
                         if day == None or int(day) <= 3:
                             channel_name = message.content[2:5].strip()
                         elif int(day) >= 4:
