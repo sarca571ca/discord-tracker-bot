@@ -122,11 +122,11 @@ class CreateChannelTasks(commands.Cog):
                         "Bloodsucker": "bs",
                     }
 
-                    channel_name = None
-                    for key, short in special_hnms.items():
-                        if key in message.content:
-                            channel_name = short
-                            break
+                channel_name = None
+                for key, short in special_hnms.items():
+                    if key in message.content:
+                        channel_name = short
+                        break
 
                     if channel_name is None:
                         if day == None or int(day) <= 3:
