@@ -78,11 +78,9 @@ class SendHourWarning(commands.Cog):
 
 class CreateChannelTasks(commands.Cog):
 
-
     def __init__(self, bot) -> None:
         self.create_channel_task.start()
         self.bot = bot
-        
 
     def cog_unload(self) -> tasks.Coroutine[tasks.Any, tasks.Any, None]:
         self.send_hour_warning.cancel()
@@ -116,17 +114,17 @@ class CreateChannelTasks(commands.Cog):
                     else:
                         day = None
 
-                special_hnms = {
+                    special_hnms = {
                         "King Arthro": "ka",
                         "King Vinegarroon": "kv",
                         "Bloodsucker": "bs",
                     }
 
-                channel_name = None
-                for key, short in special_hnms.items():
-                    if key in message.content:
-                        channel_name = short
-                        break
+                    channel_name = None
+                    for key, short in special_hnms.items():
+                        if key in message.content:
+                            channel_name = short
+                            break
 
                     if channel_name is None:
                         if day == None or int(day) <= 3:
@@ -239,4 +237,3 @@ async def setup(bot: commands.Bot):
     await bot.add_cog(DeleteOldChannels(bot))
     msg = log_print("All tasks loaded. Alise is online.")
     await channelutil.LogPrint.print(bot, msg)
-
